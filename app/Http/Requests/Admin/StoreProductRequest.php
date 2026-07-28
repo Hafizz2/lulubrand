@@ -1,0 +1,35 @@
+<?php
+
+namespace App\Http\Requests\Admin;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class StoreProductRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return $this->user()?->isStaff() ?? false;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'title'                             => ['required', 'string', 'max:255'],
+            'product_code'                      => ['nullable', 'string', 'max:100'],
+            'category_id'                       => ['required', 'exists:categories,id'],
+            'base_price'                        => ['required', 'numeric', 'min:0'],
+            'description'                       => ['nullable', 'string', 'max:5000'],
+            'material'                          => ['nullable', 'string', 'max:255'],
+            'status'                            => ['required', 'in:draft,published,archived'],
+            'is_new'                            => ['boolean'],
+            'images'                            => ['nullable', 'array', 'max:10'],
+            'images.*.color_value'              => ['nullable', 'string', 'max:100'],
+            'variants'                          => ['required', 'array', 'min:1'],
+            'variants.*.sku'                    => ['required', 'string', 'max:100'],
+            'variants.*.stock_quantity'         => ['required', 'integer', 'min:0'],
+            'variants.*.price_override'         => ['nullable', 'numeric', 'min:0'],
+            'variants.*.attribute_value_ids'    => ['nullable', 'array'],
+            'variants.*.attribute_value_ids.*'  => ['nullable'],
+        ];
+    }
+}
