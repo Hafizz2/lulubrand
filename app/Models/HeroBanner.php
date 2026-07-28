@@ -41,6 +41,32 @@ class HeroBanner extends Model
             return $value;
         }
 
-        return asset(ltrim($value, '/'));
+        $cleanPath = ltrim($value, '/');
+        if (!str_starts_with($cleanPath, 'storage/')) {
+            $cleanPath = 'storage/' . $cleanPath;
+        }
+
+        return asset($cleanPath);
+    }
+
+    /**
+     * Get absolute URL for mobile hero banner image.
+     */
+    public function getMobileImageUrlAttribute(?string $value): string
+    {
+        if (empty($value)) {
+            return $this->image_url;
+        }
+
+        if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://') || str_starts_with($value, 'data:image/')) {
+            return $value;
+        }
+
+        $cleanPath = ltrim($value, '/');
+        if (!str_starts_with($cleanPath, 'storage/')) {
+            $cleanPath = 'storage/' . $cleanPath;
+        }
+
+        return asset($cleanPath);
     }
 }
