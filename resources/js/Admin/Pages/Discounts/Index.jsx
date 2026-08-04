@@ -68,12 +68,12 @@ export default function Index({ discounts }) {
                                 className="w-full px-3.5 py-2.5 bg-[#F9F6F0] border border-[#E6DFD5] rounded-lg text-sm text-stone-900 focus:outline-none focus:border-[#8C6554]"
                             >
                                 <option value="percentage">Percentage (%)</option>
-                                <option value="fixed">Fixed Amount ($)</option>
+                                <option value="fixed">Fixed Amount (Birr)</option>
                             </select>
                         </div>
                         <div>
-                            <label className="block text-[11px] font-semibold uppercase text-stone-600 mb-1">
-                                Value ({data.type === 'percentage' ? '%' : '$'}) *
+                             <label className="block text-[11px] font-semibold uppercase text-stone-600 mb-1">
+                                Value ({data.type === 'percentage' ? '%' : 'Birr'}) *
                             </label>
                             <input
                                 type="number"
@@ -86,7 +86,7 @@ export default function Index({ discounts }) {
                             />
                         </div>
                         <div>
-                            <label className="block text-[11px] font-semibold uppercase text-stone-600 mb-1">Min Spend ($)</label>
+                             <label className="block text-[11px] font-semibold uppercase text-stone-600 mb-1">Min Spend (Birr)</label>
                             <input
                                 type="number"
                                 step="0.01"
@@ -147,10 +147,10 @@ export default function Index({ discounts }) {
                                 <tr key={d.id} className="hover:bg-[#F9F6F0]/60 transition-colors">
                                     <td className="p-4 font-mono font-bold text-[#221F1F]">{d.code}</td>
                                     <td className="p-4 font-bold text-[#8C6554]">
-                                        {d.type === 'percentage' ? `${d.value}% OFF` : `$${(d.value / 100).toFixed(2)} OFF`}
+                                        {d.type === 'percentage' ? `${d.value}% OFF` : `${(d.value / 100).toFixed(2)} Birr OFF`}
                                     </td>
                                     <td className="p-4 text-stone-600">
-                                        {d.min_spend ? `$${(d.min_spend / 100).toFixed(2)}` : 'None'}
+                                        {d.min_spend ? `${(d.min_spend / 100).toFixed(2)} Birr` : 'None'}
                                     </td>
                                     <td className="p-4 text-stone-600">
                                         {d.uses_count} {d.max_uses ? `/ ${d.max_uses}` : ''}

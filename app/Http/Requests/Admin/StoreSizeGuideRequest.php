@@ -22,13 +22,16 @@ class StoreSizeGuideRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:50',
-            'bust' => 'nullable|string|max:50',
-            'waist' => 'nullable|string|max:50',
-            'hips' => 'nullable|string|max:50',
-            'length' => 'nullable|string|max:50',
+            'name'       => 'required|string|max:50',
+            'us_size'    => 'nullable|string|max:20',
+            'uk_size'    => 'nullable|string|max:20',
+            'eu_size'    => 'nullable|string|max:20',
+            'bust'       => 'nullable|string|max:50',
+            'waist'      => 'nullable|string|max:50',
+            'hips'       => 'nullable|string|max:50',
+            'length'     => 'nullable|string|max:50',
             'sort_order' => 'nullable|integer|min:0',
-            'is_active' => 'nullable|boolean',
+            'is_active'  => 'nullable|boolean',
         ];
     }
 }

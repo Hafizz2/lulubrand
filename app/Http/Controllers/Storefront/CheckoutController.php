@@ -46,6 +46,7 @@ class CheckoutController extends Controller
         $pickupTimes = PickupTime::where('is_active', true)->orderBy('sort_order', 'asc')->get();
         $blockedDates = json_decode($settings['blocked_dates'] ?? '[]', true);
         $blockedDaysOfWeek = json_decode($settings['blocked_days_of_week'] ?? '[]', true);
+        $shippingRates = \App\Models\ShippingRate::where('is_active', true)->get();
 
         return view('storefront.checkout.index', compact(
             'summary',
@@ -53,7 +54,8 @@ class CheckoutController extends Controller
             'bankAccounts',
             'pickupTimes',
             'blockedDates',
-            'blockedDaysOfWeek'
+            'blockedDaysOfWeek',
+            'shippingRates'
         ));
     }
 
@@ -91,9 +93,29 @@ class CheckoutController extends Controller
 
                 // 1. Logistics Delivery Fee Calculation (stored in minor units)
                 $deliveryFeeCents = 0;
-                if ($validated['logistics_mode'] === 'delivery_fixed') {
-                    $feeFloat = (float) ($settings['delivery_fixed_fee'] ?? 0);
-                    $deliveryFeeCents = (int) round($feeFloat * 100);
+                if (in_array($validated['logistics_mode'], ['delivery_fixed', 'delivery_rider'], true)) {
+                    $country = $validated['customer_country'] ?? 'Ethiopia';
+                    if ($country === 'Ethiopia') {
+                        $city = $validated['customer_city'] ?? '';
+                        if ($city === 'Addis Ababa') {
+                            $district = $validated['customer_district'] ?? '';
+                            $rate = \App\Models\ShippingRate::where('country', 'Ethiopia')
+                                ->where('city', 'Addis Ababa')
+                                ->where('district', $district)
+                                ->where('is_active', true)
+                                ->first();
+                            $deliveryFeeCents = $rate ? $rate->cost_cents : 0;
+                        } else {
+                            $rate = \App\Models\ShippingRate::where('country', 'Ethiopia')
+                                ->where('city', $city)
+                                ->where('is_active', true)
+                                ->first();
+                            $deliveryFeeCents = $rate ? $rate->cost_cents : 0;
+                        }
+                    } else {
+                        // International delivery — staff will contact the customer to quote shipping
+                        $deliveryFeeCents = 0;
+                    }
                 }
 
                 // 2. Final Total Calculation
@@ -125,6 +147,8 @@ class CheckoutController extends Controller
                     'customer_phone' => $validated['customer_phone'],
                     'customer_address' => $validated['customer_address'] ?? 'Pickup at Store',
                     'customer_city' => $validated['customer_city'] ?? 'Addis Ababa',
+                    'customer_country' => $validated['customer_country'] ?? 'Ethiopia',
+                    'customer_district' => $validated['customer_district'] ?? null,
                     'status' => 'pending',
                     'payment_method' => $validated['payment_method'],
                     'payment_status' => 'unpaid',

@@ -76,10 +76,18 @@
             <p class="text-xs text-stone-600 font-light">
                 Logistics Mode: <strong class="uppercase text-stone-900">{{ str_replace('_', ' ', $order->logistics_mode) }}</strong>
             </p>
-            <p class="text-xs text-stone-600 font-light">{{ $order->customer_address }}, {{ $order->customer_city }}</p>
+            <p class="text-xs text-stone-600 font-light">
+                {{ $order->customer_address }}{{ $order->customer_district ? ', ' . $order->customer_district : '' }}{{ $order->customer_city ? ', ' . $order->customer_city : '' }}{{ $order->customer_country ? ', ' . $order->customer_country : ', Ethiopia' }}
+            </p>
 
             @if($order->google_maps_link)
-                <a href="{{ $order->google_maps_link }}" target="_blank" class="text-xs text-rose-600 font-bold underline block pt-1">📍 Google Maps Pin Link</a>
+                <a href="{{ $order->google_maps_link }}" target="_blank" class="text-xs text-rose-600 font-bold underline flex items-center gap-1.5 pt-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Google Maps Pin Link
+                </a>
             @endif
 
             <div class="pt-2 border-t border-stone-100 space-y-1">

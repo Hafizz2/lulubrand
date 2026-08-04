@@ -64,11 +64,41 @@ class ProductController extends Controller
     public function create(): Response
     {
         $categories = Category::whereNull('parent_id')->with('children')->get();
-        $attributes = Attribute::with('values')->get();
+        
+        // Ensure size attribute exists and values match size guide
+        $sizeAttr = Attribute::firstOrCreate(['slug' => 'size'], ['name' => 'Size']);
+        $activeSizes = \App\Models\SizeGuide::where('is_active', true)->orderBy('sort_order')->get();
+        $sizeValues = [];
+        foreach ($activeSizes as $sg) {
+            $sizeValues[] = \App\Models\AttributeValue::firstOrCreate([
+                'attribute_id' => $sizeAttr->id,
+                'value' => $sg->name,
+            ]);
+        }
+
+        $attributes = Attribute::with('values')->get()->map(function ($attr) use ($sizeAttr, $sizeValues) {
+            if ($attr->id === $sizeAttr->id) {
+                $attr->setRelation('values', collect($sizeValues));
+            }
+            return $attr;
+        });
+
+        $allProducts = Product::where('status', 'published')
+            ->with(['primaryImage'])
+            ->get()
+            ->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'title' => $product->title,
+                    'product_code' => $product->product_code,
+                    'image_url' => $product->primaryImage ? $product->primaryImage->url : 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=800&q=80',
+                ];
+            });
 
         return Inertia::render('Products/Create', [
             'categories' => $categories,
             'attributes' => $attributes,
+            'allProducts' => $allProducts,
         ]);
     }
 
@@ -79,11 +109,22 @@ class ProductController extends Controller
         DB::transaction(function () use ($validated, $request) {
             $basePriceCents = (int) round($validated['base_price'] * 100);
 
+            $relatedCodes = null;
+            if (!empty($validated['related_product_ids'])) {
+                $relatedCodes = Product::whereIn('id', $validated['related_product_ids'])
+                    ->pluck('product_code')
+                    ->filter()
+                    ->implode(', ');
+            }
+            $relatedCodes = $relatedCodes ?: ($validated['related_product_codes'] ?? null);
+
             // 1. Create Product
             $product = Product::create([
                 'category_id' => $validated['category_id'],
                 'title' => $validated['title'],
                 'product_code' => $validated['product_code'] ?? null,
+                'related_product_codes' => $relatedCodes,
+                'bundle_product_codes' => $validated['bundle_product_codes'] ?? null,
                 'slug' => Str::slug($validated['title']) . '-' . Str::random(4),
                 'description' => $validated['description'] ?? null,
                 'material' => $validated['material'] ?? null,
@@ -200,12 +241,42 @@ class ProductController extends Controller
     {
         $product->load(['category', 'images', 'variants.attributeValues.attribute']);
         $categories = Category::whereNull('parent_id')->with('children')->get();
-        $attributes = Attribute::with('values')->get();
+        
+        // Ensure size attribute exists and values match size guide
+        $sizeAttr = Attribute::firstOrCreate(['slug' => 'size'], ['name' => 'Size']);
+        $activeSizes = \App\Models\SizeGuide::where('is_active', true)->orderBy('sort_order')->get();
+        $sizeValues = [];
+        foreach ($activeSizes as $sg) {
+            $sizeValues[] = \App\Models\AttributeValue::firstOrCreate([
+                'attribute_id' => $sizeAttr->id,
+                'value' => $sg->name,
+            ]);
+        }
+
+        $attributes = Attribute::with('values')->get()->map(function ($attr) use ($sizeAttr, $sizeValues) {
+            if ($attr->id === $sizeAttr->id) {
+                $attr->setRelation('values', collect($sizeValues));
+            }
+            return $attr;
+        });
+
+        $allProducts = Product::where('status', 'published')
+            ->with(['primaryImage'])
+            ->get()
+            ->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'title' => $product->title,
+                    'product_code' => $product->product_code,
+                    'image_url' => $product->primaryImage ? $product->primaryImage->url : 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=800&q=80',
+                ];
+            });
 
         return Inertia::render('Products/Edit', [
             'product' => $product,
             'categories' => $categories,
             'attributes' => $attributes,
+            'allProducts' => $allProducts,
         ]);
     }
 
@@ -214,11 +285,22 @@ class ProductController extends Controller
         $validated = $request->validated();
 
         DB::transaction(function () use ($validated, $product) {
+            $relatedCodes = null;
+            if (!empty($validated['related_product_ids'])) {
+                $relatedCodes = Product::whereIn('id', $validated['related_product_ids'])
+                    ->pluck('product_code')
+                    ->filter()
+                    ->implode(', ');
+            }
+            $relatedCodes = $relatedCodes ?: ($validated['related_product_codes'] ?? null);
+
             // 1. Update Core Product Details
             $product->update([
                 'category_id' => $validated['category_id'],
                 'title' => $validated['title'],
                 'product_code' => $validated['product_code'] ?? null,
+                'related_product_codes' => $relatedCodes,
+                'bundle_product_codes' => $validated['bundle_product_codes'] ?? null,
                 'description' => $validated['description'] ?? null,
                 'material' => $validated['material'] ?? null,
                 'base_price' => (int) round($validated['base_price'] * 100),

@@ -13,6 +13,8 @@ class Product extends Model
         'category_id',
         'title',
         'product_code',
+        'related_product_codes',
+        'bundle_product_codes',
         'slug',
         'description',
         'material',

@@ -15,7 +15,16 @@ class UpdateProductRequest extends FormRequest
     {
         return [
             'title'                             => ['required', 'string', 'max:255'],
-            'product_code'                      => ['nullable', 'string', 'max:100'],
+            'product_code'                      => [
+                'required',
+                'string',
+                'max:100',
+                'unique:products,product_code,' . (is_object($this->route('product')) ? $this->route('product')->id : $this->route('product'))
+            ],
+            'related_product_codes'             => ['nullable', 'string', 'max:5000'],
+            'bundle_product_codes'              => ['nullable', 'string', 'max:5000'],
+            'related_product_ids'               => ['nullable', 'array'],
+            'related_product_ids.*'             => ['integer', 'exists:products,id'],
             'category_id'                       => ['required', 'exists:categories,id'],
             'base_price'                        => ['required', 'numeric', 'min:0'],
             'description'                       => ['nullable', 'string', 'max:5000'],

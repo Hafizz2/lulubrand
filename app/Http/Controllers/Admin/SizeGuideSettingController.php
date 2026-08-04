@@ -34,13 +34,16 @@ class SizeGuideSettingController extends Controller
         $maxOrder = SizeGuide::max('sort_order') ?? 0;
 
         SizeGuide::create([
-            'name' => $validated['name'],
-            'bust' => $validated['bust'] ?? null,
-            'waist' => $validated['waist'] ?? null,
-            'hips' => $validated['hips'] ?? null,
-            'length' => $validated['length'] ?? null,
+            'name'       => $validated['name'],
+            'us_size'    => $validated['us_size'] ?? null,
+            'uk_size'    => $validated['uk_size'] ?? null,
+            'eu_size'    => $validated['eu_size'] ?? null,
+            'bust'       => $validated['bust'] ?? null,
+            'waist'      => $validated['waist'] ?? null,
+            'hips'       => $validated['hips'] ?? null,
+            'length'     => $validated['length'] ?? null,
             'sort_order' => $validated['sort_order'] ?? ($maxOrder + 1),
-            'is_active' => $validated['is_active'] ?? true,
+            'is_active'  => $validated['is_active'] ?? true,
         ]);
 
         return back()->with('success', "Size '{$validated['name']}' added to size guide chart.");

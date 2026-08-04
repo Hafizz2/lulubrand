@@ -31,7 +31,7 @@ export default function Dashboard({ stats }) {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <StatCard label="Total Orders" value={s.total_orders ?? '—'} sub="All time" color="blue" />
                 <StatCard label="Pending Orders" value={s.pending_orders ?? '—'} sub="Awaiting action" color="amber" />
-                <StatCard label="Total Revenue" value={s.total_revenue ? `$${s.total_revenue}` : '—'} sub="From paid orders" color="emerald" />
+                <StatCard label="Total Revenue" value={s.total_revenue ? `${s.total_revenue} Birr` : '—'} sub="From paid orders" color="emerald" />
                 <StatCard label="Low Stock SKUs" value={s.low_stock ?? '—'} sub="≤ 5 units" color="mocha" />
             </div>
 
@@ -100,7 +100,7 @@ export default function Dashboard({ stats }) {
                                 <tr key={order.id} className="hover:bg-[#F9F6F0]/60 transition-colors">
                                     <td className="p-3 font-mono font-bold text-[#221F1F]">{order.order_number}</td>
                                     <td className="p-3 font-medium">{order.customer_name}</td>
-                                    <td className="p-3 font-bold text-[#8C6554]">${(order.total / 100).toFixed(2)}</td>
+                                    <td className="p-3 font-bold text-[#8C6554]">{(order.total / 100).toFixed(2)} Birr</td>
                                     <td className="p-3">
                                         <span className="px-2.5 py-0.5 text-[10px] font-bold uppercase rounded-full bg-amber-100 text-amber-800 border border-amber-200">
                                             {order.status}

@@ -15,7 +15,8 @@ function Section({ title, children }) {
 
 export default function CheckoutSettings({ settings }) {
     const form = useForm({
-        currency_symbol: settings.currency_symbol || '$',
+        currency_symbol: settings.currency_symbol || 'Birr',
+        schedule_enabled: settings.schedule_enabled || '0',
         logistics_pickup: settings.logistics_pickup || '1',
         pickup_location_name: settings.pickup_location_name || '',
         pickup_location_link: settings.pickup_location_link || '',
@@ -25,6 +26,10 @@ export default function CheckoutSettings({ settings }) {
         rider_disclaimer: settings.rider_disclaimer || '',
         payment_cod: settings.payment_cod || '1',
         payment_transfer: settings.payment_transfer || '1',
+        payment_paypal: settings.payment_paypal || '1',
+        paypal_instructions: settings.paypal_instructions || '',
+        payment_card: settings.payment_card || '1',
+        card_instructions: settings.card_instructions || '',
         deposit_required: settings.deposit_required || '0',
         deposit_percentage: settings.deposit_percentage || '50',
     });
@@ -38,8 +43,8 @@ export default function CheckoutSettings({ settings }) {
         <AdminLayout title="Checkout & Delivery Settings">
             <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
                 {/* General Settings */}
-                <Section title="⚙️ General & Currency Settings">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Section title="⚙️ General & Scheduling Settings">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-[11px] font-semibold uppercase text-stone-600 mb-1">Currency Symbol</label>
                             <input
@@ -49,6 +54,17 @@ export default function CheckoutSettings({ settings }) {
                                 className="w-full px-3.5 py-2.5 bg-[#F9F6F0] border border-[#E6DFD5] rounded-lg text-sm text-stone-900 focus:outline-none focus:border-[#8C6554]"
                                 required
                             />
+                        </div>
+                        <div>
+                            <label className="block text-[11px] font-semibold uppercase text-stone-600 mb-1">Enable Delivery/Pickup Scheduling</label>
+                            <select
+                                value={form.data.schedule_enabled}
+                                onChange={e => form.setData('schedule_enabled', e.target.value)}
+                                className="w-full px-3.5 py-2.5 bg-[#F9F6F0] border border-[#E6DFD5] rounded-lg text-sm text-stone-900 focus:outline-none focus:border-[#8C6554] font-bold"
+                            >
+                                <option value="1">ON (Require date & time slots selection)</option>
+                                <option value="0">OFF (Hide date & time selection completely)</option>
+                            </select>
                         </div>
                     </div>
                 </Section>
@@ -94,10 +110,10 @@ export default function CheckoutSettings({ settings }) {
                         )}
                     </div>
 
-                    {/* Fixed Flat Delivery Option */}
+                    {/* Courier / Shipping Delivery Option */}
                     <div className="p-4 bg-[#F9F6F0] rounded-xl border border-[#E6DFD5] space-y-3">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-[#221F1F] uppercase tracking-wider">Flat Fee Delivery</span>
+                            <span className="text-xs font-bold text-[#221F1F] uppercase tracking-wider">Delivery (Courier / Shipping)</span>
                             <select
                                 value={form.data.logistics_delivery_fixed}
                                 onChange={e => form.setData('logistics_delivery_fixed', e.target.value)}
@@ -107,18 +123,6 @@ export default function CheckoutSettings({ settings }) {
                                 <option value="0">Disabled</option>
                             </select>
                         </div>
-                        {form.data.logistics_delivery_fixed === '1' && (
-                            <div>
-                                <label className="block text-[10px] font-semibold uppercase text-stone-600 mb-1">Flat Delivery Fee ($)</label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    value={form.data.delivery_fixed_fee}
-                                    onChange={e => form.setData('delivery_fixed_fee', e.target.value)}
-                                    className="w-full sm:w-48 px-3.5 py-2.5 bg-white border border-[#E6DFD5] rounded-lg text-xs text-stone-900 focus:outline-none focus:border-[#8C6554]"
-                                />
-                            </div>
-                        )}
                     </div>
 
                     {/* Rider Delivery Option */}
@@ -178,6 +182,60 @@ export default function CheckoutSettings({ settings }) {
                                     <option value="0">Disabled</option>
                                 </select>
                             </div>
+                        </div>
+
+                        {/* PayPal settings */}
+                        <div className="p-4 bg-[#F9F6F0] rounded-xl border border-[#E6DFD5] space-y-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-[#221F1F] uppercase">PayPal (International)</span>
+                                <select
+                                    value={form.data.payment_paypal}
+                                    onChange={e => form.setData('payment_paypal', e.target.value)}
+                                    className="px-3 py-1.5 bg-white border border-[#E6DFD5] rounded-lg text-xs text-stone-900 font-bold"
+                                >
+                                    <option value="1">Enabled</option>
+                                    <option value="0">Disabled</option>
+                                </select>
+                            </div>
+                            {form.data.payment_paypal === '1' && (
+                                <div className="pt-2">
+                                    <label className="block text-[10px] font-semibold uppercase text-stone-600 mb-1">PayPal Instructions</label>
+                                    <textarea
+                                        value={form.data.paypal_instructions}
+                                        onChange={e => form.setData('paypal_instructions', e.target.value)}
+                                        placeholder="Click 'Place Order' below to proceed..."
+                                        rows="2"
+                                        className="w-full px-3.5 py-2.5 bg-white border border-[#E6DFD5] rounded-lg text-xs text-stone-900 focus:outline-none focus:border-[#8C6554]"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Credit card settings */}
+                        <div className="p-4 bg-[#F9F6F0] rounded-xl border border-[#E6DFD5] space-y-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-[#221F1F] uppercase">Credit / Debit Card</span>
+                                <select
+                                    value={form.data.payment_card}
+                                    onChange={e => form.setData('payment_card', e.target.value)}
+                                    className="px-3 py-1.5 bg-white border border-[#E6DFD5] rounded-lg text-xs text-stone-900 font-bold"
+                                >
+                                    <option value="1">Enabled</option>
+                                    <option value="0">Disabled</option>
+                                </select>
+                            </div>
+                            {form.data.payment_card === '1' && (
+                                <div className="pt-2">
+                                    <label className="block text-[10px] font-semibold uppercase text-stone-600 mb-1">Card Instructions</label>
+                                    <textarea
+                                        value={form.data.card_instructions}
+                                        onChange={e => form.setData('card_instructions', e.target.value)}
+                                        placeholder="Fill in card details securely..."
+                                        rows="2"
+                                        className="w-full px-3.5 py-2.5 bg-white border border-[#E6DFD5] rounded-lg text-xs text-stone-900 focus:outline-none focus:border-[#8C6554]"
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
 

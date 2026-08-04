@@ -16,6 +16,8 @@ class Order extends Model
         'customer_phone',
         'customer_address',
         'customer_city',
+        'customer_country',
+        'customer_district',
         'status',
         'payment_method',
         'payment_status',

@@ -22,12 +22,20 @@ class SendOrderPlacedNotification implements ShouldQueue
         $depositFormatted = '$' . number_format($order->deposit_amount / 100, 2);
         $balanceFormatted = '$' . number_format($order->balance_due / 100, 2);
 
+        $addressParts = array_filter([
+            $order->customer_address,
+            $order->customer_district,
+            $order->customer_city,
+            $order->customer_country ?: 'Ethiopia'
+        ]);
+        $fullAddress = implode(', ', $addressParts);
+
         $message = "🛍️ <b>NEW ORDER PLACED!</b>\n\n"
             . "📦 Order ID: <code>#{$order->order_number}</code>\n"
             . "👤 Customer: {$order->customer_name}\n"
             . "📞 Phone: <a href='tel:{$order->customer_phone}'>{$order->customer_phone}</a>\n"
             . "🚚 Logistics: " . strtoupper(str_replace('_', ' ', $order->logistics_mode)) . "\n"
-            . "📍 Address: {$order->customer_address}\n"
+            . "📍 Address: {$fullAddress}\n"
             . "📅 Schedule: " . ($order->preferred_date ? $order->preferred_date->format('M j, Y') : 'N/A') . " ({$order->preferred_time})\n\n"
             . "💰 Total: {$totalFormatted}\n";
 

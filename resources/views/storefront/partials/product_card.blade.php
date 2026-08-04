@@ -26,6 +26,8 @@
     }
 @endphp
 
+@php $productUrl = route('catalog.show', $product->product_code ?: $product->slug); @endphp
+
 <div x-data="{
         activeImage: '{{ asset(ltrim($primaryImage, '/')) }}',
         hoverImage: '{{ asset(ltrim($secondaryImage, '/')) }}',
@@ -34,7 +36,7 @@
     }" 
     class="flex flex-col w-full bg-transparent">
     
-    <a href="{{ route('catalog.show', $product->slug) }}" 
+    <a href="{{ $productUrl }}" 
        @mouseenter="isHovered = true" 
        @mouseleave="isHovered = false"
        class="relative block aspect-[2/3] overflow-hidden cursor-pointer bg-transparent">
@@ -75,7 +77,7 @@
             @endif
 
             <!-- Title -->
-            <a href="{{ route('catalog.show', $product->slug) }}" class="flex flex-col">
+            <a href="{{ $productUrl }}" class="flex flex-col">
                 <span class="font-serif text-[13px] leading-[18px] tracking-[0.52px] uppercase font-semibold text-[#82203E]">
                     {{ $modelName }}
                 </span>

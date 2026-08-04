@@ -51,8 +51,8 @@ export default function Invoice({ order }) {
                                 <td className="p-3 font-semibold text-stone-900">{item.product_title}</td>
                                 <td className="p-3 font-mono text-stone-500 text-xs">{item.variant_sku}</td>
                                 <td className="p-3 text-center">{item.quantity}</td>
-                                <td className="p-3 text-right">${(item.unit_price / 100).toFixed(2)}</td>
-                                <td className="p-3 text-right font-bold">${(item.total_price / 100).toFixed(2)}</td>
+                                <td className="p-3 text-right">{(item.unit_price / 100).toFixed(2)} Birr</td>
+                                <td className="p-3 text-right font-bold">{(item.total_price / 100).toFixed(2)} Birr</td>
                             </tr>
                         ))}
                     </tbody>
@@ -60,12 +60,12 @@ export default function Invoice({ order }) {
                         {order.discount_amount > 0 && (
                             <tr>
                                 <td colSpan="4" className="p-3 text-right text-sm text-stone-500">Discount</td>
-                                <td className="p-3 text-right text-sm text-emerald-700">-${(order.discount_amount / 100).toFixed(2)}</td>
+                                <td className="p-3 text-right text-sm text-emerald-700">-{(order.discount_amount / 100).toFixed(2)} Birr</td>
                             </tr>
                         )}
                         <tr className="bg-stone-900 text-white">
                             <td colSpan="4" className="p-3 text-right text-sm font-black uppercase tracking-wider">Total Payable</td>
-                            <td className="p-3 text-right text-base font-black">${(order.total / 100).toFixed(2)}</td>
+                            <td className="p-3 text-right text-base font-black">{(order.total / 100).toFixed(2)} Birr</td>
                         </tr>
                     </tfoot>
                 </table>

@@ -168,7 +168,7 @@ export default function Index({ products, categories, filters }) {
                                                     className="w-20 px-2 py-1 bg-[#F9F6F0] border border-[#E6DFD5] text-xs text-stone-900 rounded"
                                                 />
                                             ) : (
-                                                <span className="font-bold text-[#8C6554]">${(product.base_price / 100).toFixed(2)}</span>
+                                                <span className="font-bold text-[#8C6554]">{(product.base_price / 100).toFixed(2)} Birr</span>
                                             )}
                                         </td>
                                         <td className="p-4">

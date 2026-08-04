@@ -14,17 +14,21 @@ class CheckoutRequest extends FormRequest
 
     public function rules(): array
     {
-        $rules = [
+        $scheduleEnabled = \App\Models\SystemSetting::get('schedule_enabled', '0') === '1';
+
+        return [
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_phone' => ['required', 'string', 'max:50'],
             'customer_email' => ['nullable', 'email', 'max:255'],
             'logistics_mode' => ['required', 'in:pickup,delivery_fixed,delivery_rider'],
+            'customer_country' => ['required_if:logistics_mode,delivery_fixed', 'nullable', 'string', 'max:100'],
+            'customer_city' => ['required_if:customer_country,Ethiopia', 'nullable', 'string', 'max:100'],
+            'customer_district' => ['nullable', 'string', 'max:100'],
             'customer_address' => ['required_if:logistics_mode,delivery_fixed,delivery_rider', 'nullable', 'string', 'max:500'],
-            'customer_city' => ['nullable', 'string', 'max:100'],
             'google_maps_link' => ['nullable', 'string', 'max:500'],
-            'preferred_date' => ['required', 'date'],
-            'preferred_time' => ['required', 'string', 'max:100'],
-            'payment_method' => ['required', 'in:cod,transfer'],
+            'preferred_date' => $scheduleEnabled ? ['required', 'date'] : ['nullable', 'date'],
+            'preferred_time' => $scheduleEnabled ? ['required', 'string', 'max:100'] : ['nullable', 'string', 'max:100'],
+            'payment_method' => ['required', 'in:cod,transfer,paypal,card'],
             'selected_bank_id' => ['required_if:payment_method,transfer', 'nullable', 'exists:bank_accounts,id'],
             'payment_proof' => ['required_if:payment_method,transfer', 'nullable', 'file', 'image', 'max:5120'], // Max 5MB
             'confirmed_transaction_id' => ['nullable', 'string', 'max:255'],

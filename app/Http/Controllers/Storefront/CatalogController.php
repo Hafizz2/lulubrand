@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Storefront;
 use App\Http\Controllers\Controller;
 use App\Models\Attribute;
 use App\Models\Category;
+use App\Models\Discount;
 use App\Models\Product;
+use App\Models\SystemSetting;
+use App\Models\Outfit;
 use Illuminate\Http\Request;
 
 class CatalogController extends Controller
@@ -28,7 +31,23 @@ class CatalogController extends Controller
             ->take(4)
             ->get();
 
-        return view('storefront.home', compact('heroBanners', 'featuredCategories', 'newArrivals'));
+        // Active discount for announcement bar — only show bar if there's a live promo or custom message
+        $activeDiscount = Discount::where('is_active', true)
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->latest()
+            ->first();
+
+        $announcementMessage = SystemSetting::get('announcement_message', '');
+
+        return view('storefront.home', compact(
+            'heroBanners',
+            'featuredCategories',
+            'newArrivals',
+            'activeDiscount',
+            'announcementMessage'
+        ));
     }
 
     public function categoriesIndex()
@@ -132,19 +151,49 @@ class CatalogController extends Controller
         return view('storefront.catalog.index', compact('products', 'categories', 'attributes', 'currentCategory', 'sort'));
     }
 
-    public function show(string $slug)
+    public function show(string $product_code)
     {
-        $product = Product::where('slug', $slug)
+        // Look up by product_code (URL) — fallback to slug for backward compat
+        $product = Product::where('product_code', $product_code)
             ->where('status', 'published')
             ->with(['primaryImage', 'images', 'category', 'variants.attributeValues.attribute', 'variants.image'])
-            ->firstOrFail();
+            ->first();
 
-        $relatedProducts = Product::where('category_id', $product->category_id)
-            ->where('id', '!=', $product->id)
-            ->where('status', 'published')
-            ->with(['primaryImage', 'images', 'variants.attributeValues.attribute'])
-            ->take(4)
-            ->get();
+        // Backwards-compatible fallback — support old slug-based URLs
+        if (! $product) {
+            $product = Product::where('slug', $product_code)
+                ->where('status', 'published')
+                ->with(['primaryImage', 'images', 'category', 'variants.attributeValues.attribute', 'variants.image'])
+                ->firstOrFail();
+        }
+
+        $relatedProducts = collect();
+        if (!empty($product->related_product_codes)) {
+            $codes = array_map('trim', explode(',', $product->related_product_codes));
+            $relatedProducts = Product::whereIn('product_code', $codes)
+                ->where('status', 'published')
+                ->with(['primaryImage', 'images', 'variants.attributeValues.attribute'])
+                ->get();
+        }
+        
+        if ($relatedProducts->isEmpty()) {
+            $relatedProducts = Product::where('category_id', $product->category_id)
+                ->where('id', '!=', $product->id)
+                ->where('status', 'published')
+                ->with(['primaryImage', 'images', 'variants.attributeValues.attribute'])
+                ->take(4)
+                ->get();
+        }
+
+        // Fetch bundle products if this is an outfit
+        $bundleProducts = collect();
+        if (!empty($product->bundle_product_codes)) {
+            $bundleCodes = array_map('trim', explode(',', $product->bundle_product_codes));
+            $bundleProducts = Product::whereIn('product_code', $bundleCodes)
+                ->where('status', 'published')
+                ->with(['primaryImage', 'images', 'category', 'variants.attributeValues.attribute', 'variants.image'])
+                ->get();
+        }
 
         // Extract available sizes & colours for variant picker
         $attributesData = [];
@@ -155,8 +204,8 @@ class CatalogController extends Controller
                     $attributesData[$attrName] = [];
                 }
                 $attributesData[$attrName][$val->id] = [
-                    'id' => $val->id,
-                    'value' => $val->value,
+                    'id'         => $val->id,
+                    'value'      => $val->value,
                     'color_code' => $val->color_code,
                 ];
             }
@@ -165,8 +214,8 @@ class CatalogController extends Controller
         // Prepare clean variants & images array for frontend JS
         $variantsJson = $product->variants->map(function ($v) use ($product) {
             return [
-                'id' => $v->id,
-                'sku' => $v->sku,
+                'id'    => $v->id,
+                'sku'   => $v->sku,
                 'stock' => $v->stock_quantity,
                 'price' => number_format(($v->price_override ?? $product->base_price) / 100, 2),
                 'image' => $v->image ? $v->image->url : null,
@@ -176,8 +225,8 @@ class CatalogController extends Controller
 
         $imagesJson = $product->images->map(function ($img) {
             return [
-                'id' => $img->id,
-                'url' => $img->url,
+                'id'          => $img->id,
+                'url'         => $img->url,
                 'color_value' => $img->color_value,
             ];
         })->toArray();
@@ -187,10 +236,51 @@ class CatalogController extends Controller
             ->orderBy('sort_order', 'asc')
             ->get();
 
-        $sizeGuideTitle = \App\Models\SystemSetting::get('size_guide_title', 'LULU Couture Size Guide');
-        $sizeGuideDescription = \App\Models\SystemSetting::get('size_guide_description', "How to measure your size accurately:\n\n• Bust: Measure around the fullest part of your bust.\n• Waist: Measure around your natural waistline.\n• Hips: Measure around the fullest part of your hips.");
-        $sizeGuideUnit = \App\Models\SystemSetting::get('size_guide_unit', 'Inches (in)');
+        $sizeGuideTitle       = SystemSetting::get('size_guide_title', 'LULU Couture Size Guide');
+        $sizeGuideDescription = SystemSetting::get('size_guide_description', "How to measure your size accurately:\n\n• Bust: Measure around the fullest part of your bust.\n• Waist: Measure around your natural waistline.\n• Hips: Measure around the fullest part of your hips.");
+        $sizeGuideUnit        = SystemSetting::get('size_guide_unit', 'Inches (in)');
 
-        return view('storefront.catalog.show', compact('product', 'relatedProducts', 'attributesData', 'variantsJson', 'imagesJson', 'sizeGuides', 'sizeGuideTitle', 'sizeGuideDescription', 'sizeGuideUnit'));
+        return view('storefront.catalog.show', compact(
+            'product',
+            'relatedProducts',
+            'bundleProducts',
+            'attributesData',
+            'variantsJson',
+            'imagesJson',
+            'sizeGuides',
+            'sizeGuideTitle',
+            'sizeGuideDescription',
+            'sizeGuideUnit'
+        ));
+    }
+
+    /**
+     * Show details of a specific outfit look.
+     */
+    public function showOutfit(string $slug)
+    {
+        $outfit = Outfit::where('slug', $slug)
+            ->where('status', 'published')
+            ->firstOrFail();
+
+        $bundleProducts = $outfit->products;
+
+        // Size Guide Data & Settings
+        $sizeGuides = \App\Models\SizeGuide::where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->get();
+
+        $sizeGuideTitle       = SystemSetting::get('size_guide_title', 'LULU Couture Size Guide');
+        $sizeGuideDescription = SystemSetting::get('size_guide_description', "How to measure your size accurately:\n\n• Bust: Measure around the fullest part of your bust.\n• Waist: Measure around your natural waistline.\n• Hips: Measure around the fullest part of your hips.");
+        $sizeGuideUnit        = SystemSetting::get('size_guide_unit', 'Inches (in)');
+
+        return view('storefront.catalog.outfit', compact(
+            'outfit',
+            'bundleProducts',
+            'sizeGuides',
+            'sizeGuideTitle',
+            'sizeGuideDescription',
+            'sizeGuideUnit'
+        ));
     }
 }

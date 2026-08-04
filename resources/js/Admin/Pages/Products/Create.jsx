@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from '@inertiajs/react';
 import AdminLayout from '../../Layouts/AdminLayout';
 import ImageColorPickerModal from '../../Components/ImageColorPickerModal';
+import ProductSelector from '../../Components/ProductSelector';
 
-export default function Create({ categories, attributes }) {
+export default function Create({ categories, attributes, allProducts }) {
     const { data, setData, post, processing, errors } = useForm({
         title: '',
         product_code: '',
+        related_product_codes: '',
+        bundle_product_codes: '',
+        related_product_ids: [],
         category_id: categories?.[0]?.id || '',
         base_price: '',
         material: '',
@@ -77,7 +81,18 @@ export default function Create({ categories, attributes }) {
         const newVariants = [];
         sizeVals.forEach(size => {
             colorVals.forEach(color => {
-                const skuSlug = (data.title.replace(/[^a-zA-Z0-9]/g, '') + '-' + (size.id ? size.value : '') + '-' + (color.id ? color.value.substring(0, 3) : '')).toUpperCase().replace(/--+/g, '-');
+                const prefix = data.product_code ? data.product_code.replace(/[^a-zA-Z0-9]/g, '') : data.title.replace(/[^a-zA-Z0-9]/g, '');
+                
+                let colorSuffix = '';
+                if (color.id) {
+                    if (typeof color.id === 'string' && color.id.startsWith('custom')) {
+                        colorSuffix = (color.color_code || color.value || '').replace('#', '');
+                    } else {
+                        colorSuffix = color.value.replace(/[^a-zA-Z0-9]/g, '').substring(0, 5);
+                    }
+                }
+                const sizeSuffix = size.id ? size.value.replace(/[^a-zA-Z0-9]/g, '') : '';
+                const skuSlug = `${prefix}-${sizeSuffix}-${colorSuffix}`.toUpperCase().replace(/--+/g, '-').replace(/-$/, '');
 
                 const attrIds = [];
                 if (size.id) {
@@ -105,8 +120,20 @@ export default function Create({ categories, attributes }) {
             });
         });
 
+        // Deduplicate SKUs across the newly generated list
+        newVariants.forEach(v => {
+            let baseSku = v.sku;
+            let finalSku = baseSku;
+            let counter = 1;
+            while (newVariants.some(other => other !== v && other.sku === finalSku)) {
+                finalSku = `${baseSku}-${counter}`;
+                counter++;
+            }
+            v.sku = finalSku;
+        });
+
         setData('variants', newVariants);
-    }, [selectedSizes, selectedColors, data.title]);
+    }, [selectedSizes, selectedColors, data.title, data.product_code]);
 
     const handleSizeToggle = (valObj) => {
         if (selectedSizes.some(s => s.id === valObj.id)) {
@@ -191,15 +218,28 @@ export default function Create({ categories, attributes }) {
                             {errors.title && <p className="text-xs text-rose-600 mt-1">{errors.title}</p>}
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold uppercase text-stone-600 mb-1">Product Code</label>
+                            <label className="block text-xs font-semibold uppercase text-stone-600 mb-1">Product Code *</label>
                             <input
                                 type="text"
                                 value={data.product_code}
                                 onChange={(e) => setData('product_code', e.target.value)}
+                                required
                                 placeholder="e.g. LULU-DR-001"
                                 className="w-full px-4 py-3 bg-[#F9F6F0] border border-[#E6DFD5] rounded-xl text-sm text-stone-900 focus:outline-none focus:border-[#8C6554]"
                             />
+                            {errors.product_code && <p className="text-xs text-rose-600 mt-1">{errors.product_code}</p>}
                         </div>
+                    </div>
+
+                    <div className="border border-[#E6DFD5] rounded-xl p-4 bg-[#FAF8F5]">
+                        <ProductSelector
+                            products={allProducts}
+                            selectedIds={data.related_product_ids}
+                            onChange={(nextIds) => setData('related_product_ids', nextIds)}
+                            label="Suggested Products ('Complete the Look')"
+                            placeholder="Search and select products to suggest with this item..."
+                        />
+                        {errors.related_product_ids && <p className="text-xs text-rose-600 mt-1 font-semibold">{errors.related_product_ids}</p>}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -219,7 +259,7 @@ export default function Create({ categories, attributes }) {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-semibold uppercase text-stone-600 mb-1">Base Price ($) *</label>
+                            <label className="block text-xs font-semibold uppercase text-stone-600 mb-1">Base Price (Birr) *</label>
                             <input
                                 type="number"
                                 step="0.01"

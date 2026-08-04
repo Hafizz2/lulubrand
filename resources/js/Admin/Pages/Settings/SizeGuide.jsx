@@ -17,6 +17,9 @@ export default function SizeGuideSettings({ sizeGuides = [], settings = {} }) {
     // Form for Adding / Editing a Size row
     const sizeForm = useForm({
         name: '',
+        us_size: '',
+        uk_size: '',
+        eu_size: '',
         bust: '',
         waist: '',
         hips: '',
@@ -36,6 +39,9 @@ export default function SizeGuideSettings({ sizeGuides = [], settings = {} }) {
         setEditingSize(null);
         sizeForm.setData({
             name: '',
+            us_size: '',
+            uk_size: '',
+            eu_size: '',
             bust: '',
             waist: '',
             hips: '',
@@ -50,6 +56,9 @@ export default function SizeGuideSettings({ sizeGuides = [], settings = {} }) {
         setEditingSize(size);
         sizeForm.setData({
             name: size.name || '',
+            us_size: size.us_size || '',
+            uk_size: size.uk_size || '',
+            eu_size: size.eu_size || '',
             bust: size.bust || '',
             waist: size.waist || '',
             hips: size.hips || '',
@@ -361,6 +370,45 @@ export default function SizeGuideSettings({ sizeGuides = [], settings = {} }) {
                                             className="w-full px-4 py-2 bg-[#FAF8F5] border border-[#E6DFD5] rounded-xl text-xs focus:outline-none focus:border-[#8C6554]"
                                             placeholder="e.g. 26 - 27"
                                         />
+                                    </div>
+                                </div>
+
+                                {/* US / UK / EU Size equivalents */}
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-[#8C6554] mb-1">
+                                        Size Equivalents (US / UK / EU) — Optional
+                                    </label>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <div>
+                                            <label className="block text-[10px] text-stone-500 mb-1">US Size</label>
+                                            <input
+                                                type="text"
+                                                value={sizeForm.data.us_size}
+                                                onChange={(e) => sizeForm.setData('us_size', e.target.value)}
+                                                className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E6DFD5] rounded-xl text-xs focus:outline-none focus:border-[#8C6554]"
+                                                placeholder="e.g. 4"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] text-stone-500 mb-1">UK Size</label>
+                                            <input
+                                                type="text"
+                                                value={sizeForm.data.uk_size}
+                                                onChange={(e) => sizeForm.setData('uk_size', e.target.value)}
+                                                className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E6DFD5] rounded-xl text-xs focus:outline-none focus:border-[#8C6554]"
+                                                placeholder="e.g. 8"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] text-stone-500 mb-1">EU Size</label>
+                                            <input
+                                                type="text"
+                                                value={sizeForm.data.eu_size}
+                                                onChange={(e) => sizeForm.setData('eu_size', e.target.value)}
+                                                className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#E6DFD5] rounded-xl text-xs focus:outline-none focus:border-[#8C6554]"
+                                                placeholder="e.g. 36"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 

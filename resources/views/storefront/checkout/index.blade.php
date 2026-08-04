@@ -32,6 +32,9 @@
 
     <form method="POST" action="{{ route('checkout.store') }}" enctype="multipart/form-data" id="checkoutForm" @submit="if (!validateCurrentStep(0) || !validateCurrentStep(1) || !validateCurrentStep(2)) $event.preventDefault()" class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
         @csrf
+        <input type="hidden" name="customer_country" :value="form.customer_country">
+        <input type="hidden" name="customer_city" :value="form.customer_city">
+        <input type="hidden" name="customer_district" :value="form.customer_district">
 
         <!-- Left Column: Checkout Steps (lg:col-span-7) -->
         <div class="lg:col-span-7 space-y-10">
@@ -92,29 +95,29 @@
 
                 <div class="space-y-8">
                     <!-- Date/Time -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">Date *</label>
-                            <input type="text" name="preferred_date" id="datePicker" x-model="form.preferred_date" required 
-                                   :class="errors.preferred_date ? 'border-[#C49A9A] ring-2 ring-[#C49A9A]/30 bg-rose-50/50' : 'border-transparent focus:border-[#8C6554]'"
-                                   class="w-full px-4 py-3 bg-[#F3EEE8] border text-sm text-[#221F1F] focus:outline-none transition-all rounded-sm shadow-inner">
-                            <p x-show="errors.preferred_date" class="text-[10px] font-bold uppercase tracking-widest text-[#C49A9A] mt-1">Please select a date.</p>
+                    @if(($settings['schedule_enabled'] ?? '0') === '1')
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">Preferred Date *</label>
+                                <input type="text" name="preferred_date" id="datePicker" x-model="form.preferred_date" required 
+                                       :class="errors.preferred_date ? 'border-[#C49A9A] ring-2 ring-[#C49A9A]/30 bg-rose-50/50' : 'border-transparent focus:border-[#8C6554]'"
+                                       class="w-full px-4 py-3 bg-[#F3EEE8] border text-sm text-[#221F1F] focus:outline-none transition-all rounded-sm shadow-inner">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">Preferred Time *</label>
+                                <select name="preferred_time" x-model="form.preferred_time" required
+                                        :class="errors.preferred_time ? 'border-[#C49A9A] ring-2 ring-[#C49A9A]/30 bg-rose-50/50' : 'border-transparent focus:border-[#8C6554]'"
+                                        class="w-full px-4 py-3 bg-[#F3EEE8] border text-sm text-[#221F1F] focus:outline-none transition-all rounded-sm shadow-inner">
+                                    <option value="">Select Time</option>
+                                    @foreach($pickupTimes as $slot)
+                                        <option value="{{ $slot->time_label }}" data-id="{{ $slot->id }}">
+                                            {{ $slot->time_label }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">Time *</label>
-                            <select name="preferred_time" x-model="form.preferred_time" @change="errors.preferred_time = false" required 
-                                    :class="errors.preferred_time ? 'border-[#C49A9A] ring-2 ring-[#C49A9A]/30 bg-rose-50/50' : 'border-transparent focus:border-[#8C6554]'"
-                                    class="w-full px-4 py-3 bg-[#F3EEE8] border text-sm text-[#221F1F] focus:outline-none transition-all rounded-sm shadow-inner">
-                                <option value="">Select Time</option>
-                                @foreach($pickupTimes as $slot)
-                                    <option value="{{ $slot->time_label }}" data-id="{{ $slot->id }}">
-                                        {{ $slot->time_label }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <p x-show="errors.preferred_time" class="text-[10px] font-bold uppercase tracking-widest text-[#C49A9A] mt-1">Please select a time slot.</p>
-                        </div>
-                    </div>
+                    @endif
 
                     <!-- Logistics -->
                     <div class="space-y-4">
@@ -133,7 +136,7 @@
                                 <label :class="form.logistics_mode === 'delivery_fixed' ? 'border-[#8C6554] bg-[#F9F6F0]' : 'border-[#E6DFD5] bg-white'" class="p-4 border rounded-sm cursor-pointer flex items-center justify-between transition-all">
                                     <div class="flex items-center space-x-3">
                                         <input type="radio" name="logistics_mode" value="delivery_fixed" x-model="form.logistics_mode" class="text-[#8C6554] focus:ring-[#8C6554]">
-                                        <span class="font-bold text-xs uppercase tracking-wider text-[#221F1F]">Flat Fee Delivery ({{ $settings['currency_symbol'] }}{{ number_format((float)($settings['delivery_fixed_fee'] ?? 15), 2) }})</span>
+                                        <span class="font-bold text-xs uppercase tracking-wider text-[#221F1F]">Delivery (Courier / Shipping)</span>
                                     </div>
                                 </label>
                             @endif
@@ -142,21 +145,115 @@
                                 <label :class="form.logistics_mode === 'delivery_rider' ? 'border-[#8C6554] bg-[#F9F6F0]' : 'border-[#E6DFD5] bg-white'" class="p-4 border rounded-sm cursor-pointer flex items-center justify-between transition-all">
                                     <div class="flex items-center space-x-3">
                                         <input type="radio" name="logistics_mode" value="delivery_rider" x-model="form.logistics_mode" class="text-[#8C6554] focus:ring-[#8C6554]">
-                                        <span class="font-bold text-xs uppercase tracking-wider text-[#221F1F]">Express Courier (Paid to Driver)</span>
+                                        <span class="font-bold text-xs uppercase tracking-wider text-[#221F1F]">Express Courier (Paid to Rider)</span>
                                     </div>
                                 </label>
                             @endif
                         </div>
                     </div>
 
-                    <!-- Address -->
-                    <div x-show="form.logistics_mode !== 'pickup'" class="space-y-6 pt-4 border-t border-[#E6DFD5]">
+                    <!-- Address for Delivery Fixed (Dynamic Country / City / District Selection) -->
+                    <div x-show="form.logistics_mode === 'delivery_fixed'" class="space-y-6 pt-4 border-t border-[#E6DFD5]">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">Country *</label>
+                                <select x-model="selectedCountryDropdown" @change="onCountryChange()" required
+                                        class="w-full px-4 py-3 bg-[#F3EEE8] border border-transparent focus:border-[#8C6554] text-sm text-[#221F1F] focus:outline-none transition-colors rounded-sm shadow-inner">
+                                    <option value="Ethiopia">Ethiopia</option>
+                                    <template x-for="c in countries" :key="c">
+                                        <option :value="c" x-text="c"></option>
+                                    </template>
+                                    <option value="Other">Other (Enter custom name...)</option>
+                                </select>
+                            </div>
+
+                            <div x-show="selectedCountryDropdown === 'Other'">
+                                <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">Custom Country Name *</label>
+                                <input type="text" x-model="form.customer_country" :required="selectedCountryDropdown === 'Other'"
+                                       placeholder="e.g. Italy, Australia"
+                                       class="w-full px-4 py-3 bg-[#F3EEE8] border border-transparent focus:border-[#8C6554] text-sm text-[#221F1F] focus:outline-none transition-colors rounded-sm shadow-inner">
+                            </div>
+
+                            <!-- If Ethiopia, show city dropdown -->
+                            <div x-show="form.customer_country === 'Ethiopia'">
+                                <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">City *</label>
+                                <select x-model="form.customer_city" @change="onCityChange()" :required="form.logistics_mode === 'delivery_fixed' && form.customer_country === 'Ethiopia'"
+                                        class="w-full px-4 py-3 bg-[#F3EEE8] border border-transparent focus:border-[#8C6554] text-sm text-[#221F1F] focus:outline-none transition-colors rounded-sm shadow-inner">
+                                    <option value="">Select City</option>
+                                    <template x-for="c in cities" :key="c">
+                                        <option :value="c" x-text="getCityOptionLabel(c)"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            <!-- If International, show city text input -->
+                            <div x-show="form.customer_country !== 'Ethiopia'">
+                                <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">City / Region (Optional)</label>
+                                <input type="text" x-model="form.customer_city"
+                                       placeholder="e.g. London, New York"
+                                       class="w-full px-4 py-3 bg-[#F3EEE8] border border-transparent focus:border-[#8C6554] text-sm text-[#221F1F] focus:outline-none transition-colors rounded-sm shadow-inner">
+                            </div>
+                        </div>
+
+                        <!-- If Addis Ababa, show district dropdown -->
+                        <div x-show="form.customer_country === 'Ethiopia' && form.customer_city === 'Addis Ababa'">
+                            <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">District / Area *</label>
+                            <select x-model="form.customer_district" @change="onDistrictChange()" :required="form.logistics_mode === 'delivery_fixed' && form.customer_country === 'Ethiopia' && form.customer_city === 'Addis Ababa'"
+                                    class="w-full px-4 py-3 bg-[#F3EEE8] border border-transparent focus:border-[#8C6554] text-sm text-[#221F1F] focus:outline-none transition-colors rounded-sm shadow-inner">
+                                <option value="">Select District</option>
+                                <template x-for="d in districts" :key="d">
+                                    <option :value="d" x-text="getDistrictOptionLabel(d)"></option>
+                                </template>
+                            </select>
+                        </div>
+
+                        <!-- Street Address -->
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">Street Address *</label>
-                            <textarea name="customer_address" x-model="form.customer_address" @input="errors.customer_address = false" :required="form.logistics_mode !== 'pickup'" rows="2" 
+                            <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">Street Address & Delivery Instructions *</label>
+                            <textarea name="customer_address" x-model="form.customer_address" @input="errors.customer_address = false" :required="form.logistics_mode === 'delivery_fixed'" rows="2" 
+                                      placeholder="e.g. House No. 123, behind Edna Mall"
                                       :class="errors.customer_address ? 'border-[#C49A9A] ring-2 ring-[#C49A9A]/30 bg-rose-50/50' : 'border-transparent focus:border-[#8C6554]'"
                                       class="w-full px-4 py-3 bg-[#F3EEE8] border text-sm text-[#221F1F] focus:outline-none transition-all rounded-sm shadow-inner"></textarea>
-                            <p x-show="errors.customer_address" class="text-[10px] font-bold uppercase tracking-widest text-[#C49A9A] mt-1">Delivery street address is required.</p>
+                            <p x-show="errors.customer_address" class="text-[10px] font-bold uppercase tracking-widest text-[#C49A9A] mt-1">Delivery address is required.</p>
+                        </div>
+
+                        <!-- Info box for International Shipping -->
+                        <div x-show="form.customer_country !== 'Ethiopia' && form.customer_country !== ''" class="p-4 bg-[#F9F6F0] border-l-2 border-[#8C6554] space-y-2">
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-[#8C6554] flex items-center gap-2">
+                                <svg class="w-4 h-4 text-[#8C6554]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 002 2h1.5m1.832-3.752a9 9 0 11-12.013-4.723" />
+                                </svg>
+                                International Shipping Notice
+                            </p>
+                            <p class="text-[11px] text-stone-600 normal-case leading-relaxed">
+                                Since you are shipping outside of Ethiopia, our team will coordinate express international courier delivery. 
+                                **Your shipping cost is calculated at 0.00 Birr initially**, and our staff will contact you shortly via email/phone after order placement to quote the exact shipping cost and complete coordination.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Address for Express Rider (Simple Text Input ONLY) -->
+                    <div x-show="form.logistics_mode === 'delivery_rider'" class="space-y-6 pt-4 border-t border-[#E6DFD5]">
+                        @if(!empty($settings['rider_disclaimer']))
+                            <div class="p-4 bg-[#FAF8F5] border-l-2 border-[#8C6554] space-y-1">
+                                <p class="text-[11px] font-bold uppercase tracking-wider text-[#8C6554] flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-[#8C6554]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Delivery Info / Instructions
+                                </p>
+                                <p class="text-[11px] text-stone-600 normal-case leading-relaxed">
+                                    {{ $settings['rider_disclaimer'] }}
+                                </p>
+                            </div>
+                        @endif
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">Delivery Address & Rider Instructions *</label>
+                            <textarea name="customer_address_rider" x-model="form.customer_address" @input="errors.customer_address = false" :required="form.logistics_mode === 'delivery_rider'" rows="3" 
+                                      placeholder="Enter your exact city, district, neighborhood, building, house number, or directions for the rider..."
+                                      :class="errors.customer_address ? 'border-[#C49A9A] ring-2 ring-[#C49A9A]/30 bg-rose-50/50' : 'border-transparent focus:border-[#8C6554]'"
+                                      class="w-full px-4 py-3 bg-[#F3EEE8] border text-sm text-[#221F1F] focus:outline-none transition-all rounded-sm shadow-inner"></textarea>
+                            <p x-show="errors.customer_address" class="text-[10px] font-bold uppercase tracking-widest text-[#C49A9A] mt-1">Delivery address is required.</p>
                         </div>
                     </div>
 
@@ -197,12 +294,42 @@
                             <label :class="form.payment_method === 'transfer' ? 'border-[#8C6554] bg-[#F9F6F0]' : 'border-[#E6DFD5] bg-white'" class="p-4 border rounded-sm cursor-pointer flex items-center justify-between transition-all">
                                 <div class="flex items-center space-x-3">
                                     <input type="radio" name="payment_method" value="transfer" x-model="form.payment_method" @change="if(!form.selected_bank_id) form.selected_bank_id = '{{ $bankAccounts->first()?->id }}'" class="text-[#8C6554] focus:ring-[#8C6554]">
-                                    <span class="font-bold text-xs uppercase tracking-wider text-[#221F1F]">Bank Transfer</span>
+                                    <span class="font-bold text-xs uppercase tracking-wider text-[#221F1F]">Local Bank / Mobile Transfer</span>
+                                </div>
+                            </label>
+                        @endif
+
+                        <!-- PayPal (International) -->
+                        @if(($settings['payment_paypal'] ?? '1') === '1')
+                            <label :class="form.payment_method === 'paypal' ? 'border-[#8C6554] bg-[#F9F6F0]' : 'border-[#E6DFD5] bg-white'" class="p-4 border rounded-sm cursor-pointer flex items-center justify-between transition-all">
+                                <div class="flex items-center space-x-3">
+                                    <input type="radio" name="payment_method" value="paypal" x-model="form.payment_method" @change="form.selected_bank_id = ''" class="text-[#8C6554] focus:ring-[#8C6554]">
+                                    <span class="font-bold text-xs uppercase tracking-wider text-[#221F1F] flex items-center gap-1.5">
+                                        PayPal <span class="text-[9px] font-semibold text-stone-500 lowercase">(international)</span>
+                                    </span>
+                                </div>
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" class="h-4">
+                            </label>
+                        @endif
+
+                        <!-- Credit / Debit Card -->
+                        @if(($settings['payment_card'] ?? '1') === '1')
+                            <label :class="form.payment_method === 'card' ? 'border-[#8C6554] bg-[#F9F6F0]' : 'border-[#E6DFD5] bg-white'" class="p-4 border rounded-sm cursor-pointer flex items-center justify-between transition-all">
+                                <div class="flex items-center space-x-3">
+                                    <input type="radio" name="payment_method" value="card" x-model="form.payment_method" @change="form.selected_bank_id = ''" class="text-[#8C6554] focus:ring-[#8C6554]">
+                                    <span class="font-bold text-xs uppercase tracking-wider text-[#221F1F] flex items-center gap-1.5">
+                                        Credit / Debit Card <span class="text-[9px] font-semibold text-stone-500 lowercase">(international)</span>
+                                    </span>
+                                </div>
+                                <div class="flex gap-1.5 items-center">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png" alt="Visa" class="h-3 w-auto object-contain">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Mastercard_2019_logo.svg" alt="Mastercard" class="h-3 w-auto object-contain">
                                 </div>
                             </label>
                         @endif
                     </div>
 
+                    <!-- Transfer Options -->
                     <div x-show="form.payment_method === 'transfer'" class="space-y-6 pt-4 border-t border-[#E6DFD5]">
                         <div class="grid grid-cols-1 gap-4">
                             @foreach($bankAccounts as $bank)
@@ -239,13 +366,54 @@
                         </div>
                     </div>
 
+                    <!-- PayPal Instructions -->
+                    <div x-show="form.payment_method === 'paypal'" class="p-6 border border-[#E6DFD5] bg-[#FAF8F5] text-center space-y-3 pt-4 rounded-sm">
+                        <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#0070ba]/10 text-[#0070ba] mb-1">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.328a.962.962 0 0 1 .951-.817h7.814c3.483 0 5.669 1.637 6.136 4.708.57 3.738-1.583 6.079-5.177 6.079h-1.921c-.482 0-.895.341-.98.815l-1.636 9.255a.643.643 0 0 1-.633.57z"/></svg>
+                        </div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-[#0070ba]">Pay securely with PayPal</p>
+                        <p class="text-[11px] text-stone-500 normal-case max-w-sm mx-auto leading-relaxed">
+                            {{ $settings['paypal_instructions'] ?? 'Click \'Place Order\' below to proceed. You will be redirected to the secure PayPal portal to authorize payment.' }}
+                        </p>
+                    </div>
+
+                    <!-- Credit / Debit Card Form -->
+                    <div x-show="form.payment_method === 'card'" class="p-6 border border-[#E6DFD5] bg-[#FAF8F5] space-y-4 rounded-sm">
+                        <p class="text-xs font-bold uppercase tracking-wider text-[#221F1F] border-b border-[#E6DFD5] pb-2">Credit / Debit Card Information</p>
+                        <p class="text-[11px] text-stone-500 normal-case leading-relaxed">
+                            {{ $settings['card_instructions'] ?? 'Fill in your credit or debit card details below. All transaction data is securely processed.' }}
+                        </p>
+                        <div class="space-y-4 pt-2">
+                            <div>
+                                <label class="block text-[9px] font-bold uppercase text-stone-500 mb-1">Cardholder Name</label>
+                                <input type="text" placeholder="e.g. Sofia Abera" class="w-full px-3 py-2 bg-white border border-[#E6DFD5] text-xs focus:outline-none focus:border-[#8C6554] rounded-sm">
+                            </div>
+                            <div>
+                                <label class="block text-[9px] font-bold uppercase text-stone-500 mb-1">Card Number</label>
+                                <div class="relative">
+                                    <input type="text" placeholder="•••• •••• •••• ••••" maxlength="19" class="w-full px-3 py-2 bg-white border border-[#E6DFD5] text-xs focus:outline-none focus:border-[#8C6554] rounded-sm font-mono tracking-widest">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[9px] font-bold uppercase text-stone-500 mb-1">Expiration Date</label>
+                                    <input type="text" placeholder="MM / YY" maxlength="5" class="w-full px-3 py-2 bg-white border border-[#E6DFD5] text-xs focus:outline-none focus:border-[#8C6554] rounded-sm font-mono text-center">
+                                </div>
+                                <div>
+                                    <label class="block text-[9px] font-bold uppercase text-stone-500 mb-1">CVC / CVV</label>
+                                    <input type="password" placeholder="•••" maxlength="3" class="w-full px-3 py-2 bg-white border border-[#E6DFD5] text-xs focus:outline-none focus:border-[#8C6554] rounded-sm font-mono text-center">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+
                     <div class="flex justify-end pt-6" x-show="currentStep === 2">
                         <button type="submit" class="bg-[#221F1F] hover:bg-[#8C6554] text-white font-bold text-[11px] uppercase tracking-[0.2em] px-10 py-4 rounded-full shadow-lg transition-all pointer-events-auto">
                             Place Order
                         </button>
                     </div>
                 </div>
-            </div>
 
         </div>
 
@@ -296,7 +464,6 @@
 <script>
 function checkoutWizard() {
     const rawSubtotal = {{ $summary['subtotal'] / 100 }};
-    const fixedFee = {{ (float)($settings['delivery_fixed_fee'] ?? 15) }};
     const currency = '{{ $settings['currency_symbol'] ?? '$' }}';
     const blockedDates = @json($blockedDates);
     const blockedDaysOfWeek = @json($blockedDaysOfWeek);
@@ -306,6 +473,12 @@ function checkoutWizard() {
         timerSeconds: 1200,
         timerDisplay: '20:00',
         proofPreviewUrl: null,
+        selectedCountryDropdown: 'Ethiopia',
+
+        shippingRates: @json($shippingRates),
+        countries: [],
+        cities: [],
+        districts: [],
 
         errors: {
             customer_name: false,
@@ -323,6 +496,9 @@ function checkoutWizard() {
             logistics_mode: '{{ ($settings['logistics_pickup'] ?? '1') === '1' ? 'pickup' : 'delivery_fixed' }}',
             preferred_date: '',
             preferred_time: '',
+            customer_country: 'Ethiopia',
+            customer_city: '',
+            customer_district: '',
             customer_address: '',
             payment_method: '{{ ($settings['payment_cod'] ?? '1') === '1' ? 'cod' : 'transfer' }}',
             selected_bank_id: '{{ ($settings['payment_cod'] ?? '1') === '1' ? '' : $bankAccounts->first()?->id }}',
@@ -331,6 +507,13 @@ function checkoutWizard() {
         initWizard() {
             this.startTimer();
             this.initFlatpickr();
+
+            // Populate other countries from database list (excluding Ethiopia which is default)
+            const otherCountries = [...new Set(this.shippingRates.filter(r => r.country !== 'Ethiopia').map(r => r.country))];
+            this.countries = otherCountries;
+
+            // Populate cities for Ethiopia
+            this.cities = [...new Set(this.shippingRates.filter(r => r.country === 'Ethiopia').map(r => r.city))];
         },
 
         startTimer() {
@@ -376,12 +559,61 @@ function checkoutWizard() {
                 });
         },
 
-        get deliveryFee() { return this.form.logistics_mode === 'delivery_fixed' ? fixedFee : 0; },
+        onCountryChange() {
+            if (this.selectedCountryDropdown === 'Other') {
+                this.form.customer_country = '';
+            } else {
+                this.form.customer_country = this.selectedCountryDropdown;
+            }
+            this.form.customer_city = '';
+            this.form.customer_district = '';
+            this.districts = [];
+            this.errors.customer_address = false;
+        },
+
+        onCityChange() {
+            this.form.customer_district = '';
+            this.districts = [...new Set(this.shippingRates.filter(r => r.country === 'Ethiopia' && r.city === this.form.customer_city && r.district).map(r => r.district))];
+        },
+
+        getCityOptionLabel(city) {
+            if (city === 'Addis Ababa') return 'Addis Ababa (price varies by district)';
+            const rate = this.shippingRates.find(r => r.country === 'Ethiopia' && r.city === city && !r.district);
+            return rate ? `${city} (${(rate.cost_cents / 100).toFixed(2)} Birr)` : city;
+        },
+
+        getDistrictOptionLabel(district) {
+            const rate = this.shippingRates.find(r => r.country === 'Ethiopia' && r.city === 'Addis Ababa' && r.district === district);
+            return rate ? `${district} (${(rate.cost_cents / 100).toFixed(2)} Birr)` : district;
+        },
+
+        onDistrictChange() {
+            // Recalculates total automatically
+        },
+
+        get deliveryFee() {
+            if (this.form.logistics_mode === 'pickup') return 0;
+            if (this.form.logistics_mode === 'delivery_rider') return 0;
+            if (this.form.customer_country !== 'Ethiopia') return 0;
+
+            const city = this.form.customer_city;
+            if (city === 'Addis Ababa') {
+                const district = this.form.customer_district;
+                const rate = this.shippingRates.find(r => r.country === 'Ethiopia' && r.city === 'Addis Ababa' && r.district === district);
+                return rate ? (rate.cost_cents / 100) : 0;
+            } else {
+                const rate = this.shippingRates.find(r => r.country === 'Ethiopia' && r.city === city);
+                return rate ? (rate.cost_cents / 100) : 0;
+            }
+        },
+
         get deliveryFeeDisplay() {
             if (this.form.logistics_mode === 'pickup') return 'Free';
             if (this.form.logistics_mode === 'delivery_rider') return 'Paid to Driver';
+            if (this.form.customer_country !== 'Ethiopia') return 'Calculated by Staff';
             return this.deliveryFee.toFixed(2) + ' Birr';
         },
+
         get totalAmount() { return Math.max(0, rawSubtotal + this.deliveryFee); },
         get totalDisplay() { return this.totalAmount.toFixed(2) + ' Birr'; },
 
@@ -403,20 +635,39 @@ function checkoutWizard() {
             }
 
             if (stepIdx === 1) {
-                if (!this.form.preferred_date) {
-                    this.errors.preferred_date = true;
-                    isValid = false;
-                    missingField = 'Preferred Date';
+                const scheduleEnabled = '{{ $settings['schedule_enabled'] ?? '0' }}' === '1';
+                if (scheduleEnabled) {
+                    if (!this.form.preferred_date) {
+                        this.errors.preferred_date = true;
+                        isValid = false;
+                        missingField = 'Preferred Date';
+                    }
+                    if (!this.form.preferred_time) {
+                        this.errors.preferred_time = true;
+                        isValid = false;
+                        if (!missingField) missingField = 'Time Slot';
+                    }
                 }
-                if (!this.form.preferred_time) {
-                    this.errors.preferred_time = true;
-                    isValid = false;
-                    if (!missingField) missingField = 'Time Slot';
+                if (this.form.logistics_mode === 'delivery_fixed') {
+                    if (!this.form.customer_country) {
+                        isValid = false;
+                        if (!missingField) missingField = 'Country';
+                    }
+                    if (this.form.customer_country === 'Ethiopia' && !this.form.customer_city) {
+                        isValid = false;
+                        if (!missingField) missingField = 'City';
+                    }
+                    if (this.form.customer_country === 'Ethiopia' && this.form.customer_city === 'Addis Ababa' && !this.form.customer_district) {
+                        isValid = false;
+                        if (!missingField) missingField = 'District';
+                    }
                 }
-                if (this.form.logistics_mode !== 'pickup' && (!this.form.customer_address || !this.form.customer_address.trim())) {
-                    this.errors.customer_address = true;
-                    isValid = false;
-                    if (!missingField) missingField = 'Delivery Address';
+                if (this.form.logistics_mode !== 'pickup') {
+                    if (!this.form.customer_address || !this.form.customer_address.trim()) {
+                        this.errors.customer_address = true;
+                        isValid = false;
+                        if (!missingField) missingField = 'Delivery Address';
+                    }
                 }
             }
 

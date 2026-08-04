@@ -41,7 +41,8 @@ class SystemSetting extends Model
     public static function getAllCheckoutSettings(): array
     {
         $keys = [
-            'currency_symbol' => '$',
+            'currency_symbol' => 'Birr',
+            'schedule_enabled' => '0',
             'logistics_pickup' => '1',
             'pickup_location_name' => 'LULU Main Boutique Store',
             'pickup_location_link' => 'https://maps.google.com',
@@ -51,6 +52,10 @@ class SystemSetting extends Model
             'rider_disclaimer' => 'Delivery fee will be paid directly to the courier rider upon delivery.',
             'payment_cod' => '1',
             'payment_transfer' => '1',
+            'payment_paypal' => '1',
+            'paypal_instructions' => 'Click "Place Order" below to proceed. You will be redirected to the secure PayPal portal to authorize payment.',
+            'payment_card' => '1',
+            'card_instructions' => 'Fill in your credit or debit card details below. All transaction data is securely processed.',
             'deposit_required' => '0',
             'deposit_percentage' => '50',
             'blocked_dates' => '[]',

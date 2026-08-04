@@ -33,6 +33,8 @@ export default function Edit({ product, categories, attributes }) {
     const { data, setData, post, processing, errors } = useForm({
         title: product.title || '',
         product_code: product.product_code || '',
+        related_product_codes: product.related_product_codes || '',
+        bundle_product_codes: product.bundle_product_codes || '',
         category_id: product.category_id || '',
         base_price: product.base_price ? (product.base_price / 100).toFixed(2) : '',
         material: product.material || '',
@@ -121,6 +123,81 @@ export default function Edit({ product, categories, attributes }) {
         }
     };
 
+    // Variant Matrix Auto-Generator for Edit page
+    React.useEffect(() => {
+        if (!data.title || (!selectedSizes.length && !selectedColors.length)) {
+            return;
+        }
+
+        const sizeVals = selectedSizes.length ? selectedSizes : [{ value: 'DEFAULT', id: null }];
+        const colorVals = selectedColors.length ? selectedColors : [{ value: 'DEFAULT', id: null }];
+
+        const newVariants = [];
+        sizeVals.forEach(size => {
+            colorVals.forEach(color => {
+                // Find if this variant combination already exists in the original product variants
+                const existing = data.variants.find(v => {
+                    const hasSize = size.id ? v.attribute_value_ids.includes(size.id) : true;
+                    const hasColor = color.id ? (typeof color.id === 'string' && color.id.startsWith('custom') 
+                        ? v.attribute_value_ids.some(id => typeof id === 'string' && id.startsWith('custom:'))
+                        : v.attribute_value_ids.includes(color.id)) : true;
+                    return hasSize && hasColor;
+                });
+
+                const prefix = data.product_code ? data.product_code.replace(/[^a-zA-Z0-9]/g, '') : data.title.replace(/[^a-zA-Z0-9]/g, '');
+                
+                let colorSuffix = '';
+                if (color.id) {
+                    if (typeof color.id === 'string' && color.id.startsWith('custom')) {
+                        colorSuffix = (color.color_code || color.value || '').replace('#', '');
+                    } else {
+                        colorSuffix = color.value.replace(/[^a-zA-Z0-9]/g, '').substring(0, 5);
+                    }
+                }
+                const sizeSuffix = size.id ? size.value.replace(/[^a-zA-Z0-9]/g, '') : '';
+                const skuSlug = `${prefix}-${sizeSuffix}-${colorSuffix}`.toUpperCase().replace(/--+/g, '-').replace(/-$/, '');
+
+                const attrIds = [];
+                if (size.id) attrIds.push(size.id);
+                if (color.id) {
+                    if (typeof color.id === 'string' && color.id.startsWith('custom')) {
+                        attrIds.push(`custom:${color.color_code || color.value}`);
+                    } else {
+                        attrIds.push(color.id);
+                    }
+                }
+
+                newVariants.push({
+                    id: existing ? existing.id : null,
+                    sku: existing ? existing.sku : skuSlug,
+                    stock_quantity: existing ? existing.stock_quantity : 10,
+                    price_override: existing ? existing.price_override : '',
+                    attribute_value_ids: attrIds,
+                    size_name: size.id ? size.value : '',
+                    color_name: color.id ? color.value : '',
+                    label: `${size.id ? 'Size ' + size.value : ''} ${color.id ? 'Color ' + color.value : ''}`.trim()
+                });
+            });
+        });
+
+        // Deduplicate SKUs across the newly generated list
+        newVariants.forEach(v => {
+            let baseSku = v.sku;
+            let finalSku = baseSku;
+            let counter = 1;
+            while (newVariants.some(other => other !== v && other.sku === finalSku)) {
+                finalSku = `${baseSku}-${counter}`;
+                counter++;
+            }
+            v.sku = finalSku;
+        });
+
+        const signature = (list) => list.map(v => `${v.id}-${v.sku}-${v.stock_quantity}-${v.price_override}`).join('|');
+        if (signature(newVariants) !== signature(data.variants)) {
+            setData('variants', newVariants);
+        }
+    }, [selectedSizes, selectedColors, data.title, data.product_code]);
+
     const handleColorSampled = (colorData) => {
         const newColor = {
             id: 'custom-' + Date.now(),
@@ -186,14 +263,43 @@ export default function Edit({ product, categories, attributes }) {
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold uppercase text-stone-600 mb-1">Product Code</label>
+                            <label className="block text-xs font-semibold uppercase text-stone-600 mb-1">Product Code *</label>
                             <input
                                 type="text"
                                 value={data.product_code}
                                 onChange={(e) => setData('product_code', e.target.value)}
+                                required
                                 placeholder="e.g. LULU-DR-001"
                                 className="w-full px-4 py-3 bg-[#F9F6F0] border border-[#E6DFD5] rounded-xl text-sm text-stone-900 focus:outline-none focus:border-[#8C6554]"
                             />
+                            {errors.product_code && <p className="text-xs text-rose-600 mt-1">{errors.product_code}</p>}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold uppercase text-stone-600 mb-1">Suggested Product Codes (Optional)</label>
+                            <input
+                                type="text"
+                                value={data.related_product_codes}
+                                onChange={(e) => setData('related_product_codes', e.target.value)}
+                                placeholder="Comma separated, e.g. SHOE-01, BAG-02"
+                                className="w-full px-4 py-3 bg-[#F9F6F0] border border-[#E6DFD5] rounded-xl text-sm text-stone-900 focus:outline-none focus:border-[#8C6554]"
+                            />
+                            <p className="text-[10px] text-stone-500 mt-1">Provide product codes of items to show under 'Complete the Look' suggestions list.</p>
+                            {errors.related_product_codes && <p className="text-xs text-rose-600 mt-1">{errors.related_product_codes}</p>}
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold uppercase text-stone-600 mb-1">Full Outfit Bundle Items (Optional)</label>
+                            <input
+                                type="text"
+                                value={data.bundle_product_codes}
+                                onChange={(e) => setData('bundle_product_codes', e.target.value)}
+                                placeholder="Comma separated, e.g. DRESS-01, SHOE-01, EARR-02"
+                                className="w-full px-4 py-3 bg-[#F9F6F0] border border-[#E6DFD5] rounded-xl text-sm text-stone-900 focus:outline-none focus:border-[#8C6554]"
+                            />
+                            <p className="text-[10px] text-stone-500 mt-1">If this product is a 'Full Outfit' bundle, list the component product codes here.</p>
+                            {errors.bundle_product_codes && <p className="text-xs text-rose-600 mt-1">{errors.bundle_product_codes}</p>}
                         </div>
                     </div>
 
@@ -213,7 +319,7 @@ export default function Edit({ product, categories, attributes }) {
                         </div>
 
                         <div>
-                            <label className="block text-xs font-semibold uppercase text-stone-600 mb-1">Base Price ($) *</label>
+                            <label className="block text-xs font-semibold uppercase text-stone-600 mb-1">Base Price (Birr) *</label>
                             <input
                                 type="number"
                                 step="0.01"
@@ -440,7 +546,7 @@ export default function Edit({ product, categories, attributes }) {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[9px] uppercase text-stone-500 font-bold mb-1">Price Override ($)</label>
+                                            <label className="block text-[9px] uppercase text-stone-500 font-bold mb-1">Price Override (Birr)</label>
                                             <input
                                                 type="number"
                                                 step="0.01"

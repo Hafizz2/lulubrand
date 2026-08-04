@@ -13,6 +13,8 @@ class PaymentGatewayManager
             'cod' => new CashOnDeliveryPayment(),
             'transfer', 'bank_transfer' => new BankTransferPayment(),
             'manual_mobile_money' => new ManualMobileMoneyPayment(),
+            'paypal' => new PaypalPayment(),
+            'card' => new CardPayment(),
             default => throw new InvalidArgumentException("Unsupported payment method: {$method}"),
         };
     }

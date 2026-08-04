@@ -173,8 +173,8 @@ export default function Show({ order }) {
                                             </div>
 
                                             <div className="text-right sm:text-right font-mono">
-                                                <div className="text-xs text-stone-500">Unit: ${(item.unit_price / 100).toFixed(2)}</div>
-                                                <div className="text-base font-bold text-[#8C6554]">${(item.total_price / 100).toFixed(2)}</div>
+                                                <div className="text-xs text-stone-500">Unit: {(item.unit_price / 100).toFixed(2)} Birr</div>
+                                                <div className="text-base font-bold text-[#8C6554]">{(item.total_price / 100).toFixed(2)} Birr</div>
                                             </div>
                                         </div>
                                     );
@@ -185,32 +185,32 @@ export default function Show({ order }) {
                             <div className="mt-8 pt-6 border-t border-[#E6DFD5] space-y-3 text-xs font-semibold">
                                 <div className="flex justify-between text-stone-600">
                                     <span>Subtotal</span>
-                                    <span className="font-mono text-stone-900">${(order.subtotal / 100).toFixed(2)}</span>
+                                    <span className="font-mono text-stone-900">{(order.subtotal / 100).toFixed(2)} Birr</span>
                                 </div>
                                 {order.discount_amount > 0 && (
                                     <div className="flex justify-between text-emerald-700">
                                         <span>Discount</span>
-                                        <span className="font-mono">-${(order.discount_amount / 100).toFixed(2)}</span>
+                                        <span className="font-mono">-{(order.discount_amount / 100).toFixed(2)} Birr</span>
                                     </div>
                                 )}
                                 <div className="flex justify-between text-stone-600">
                                     <span>Delivery Fee ({order.logistics_mode})</span>
-                                    <span className="font-mono text-stone-900">${(order.delivery_fee / 100).toFixed(2)}</span>
+                                    <span className="font-mono text-stone-900">{(order.delivery_fee / 100).toFixed(2)} Birr</span>
                                 </div>
                                 <div className="flex justify-between text-base font-bold text-[#221F1F] pt-3 border-t border-[#E6DFD5]">
                                     <span>Total Amount</span>
-                                    <span className="font-mono text-[#8C6554]">${(order.total / 100).toFixed(2)}</span>
+                                    <span className="font-mono text-[#8C6554]">{(order.total / 100).toFixed(2)} Birr</span>
                                 </div>
 
                                 {order.deposit_amount > 0 && (
                                     <div className="mt-4 p-4 bg-[#F3EEE8] rounded-xl border border-[#E6DFD5] space-y-2 text-xs">
                                         <div className="flex justify-between font-bold text-[#8C6554]">
                                             <span>Deposit Paid / Due Now</span>
-                                            <span className="font-mono">${(order.deposit_amount / 100).toFixed(2)}</span>
+                                            <span className="font-mono">{(order.deposit_amount / 100).toFixed(2)} Birr</span>
                                         </div>
                                         <div className="flex justify-between text-stone-600">
                                             <span>Balance Remaining at Handover</span>
-                                            <span className="font-mono">${(order.balance_due / 100).toFixed(2)}</span>
+                                            <span className="font-mono">{(order.balance_due / 100).toFixed(2)} Birr</span>
                                         </div>
                                     </div>
                                 )}
@@ -263,7 +263,9 @@ export default function Show({ order }) {
                                 </div>
                                 <div>
                                     <span className="text-[10px] font-bold uppercase text-stone-400 block">Delivery Address</span>
-                                    <p className="text-stone-800 font-medium leading-relaxed">{order.customer_address}, {order.customer_city}</p>
+                                    <p className="text-stone-800 font-medium leading-relaxed">
+                                        {order.customer_address}, {order.customer_district ? order.customer_district + ', ' : ''}{order.customer_city}, {order.customer_country || 'Ethiopia'}
+                                    </p>
                                     {order.google_maps_link && (
                                         <a href={order.google_maps_link} target="_blank" rel="noreferrer" className="text-[#8C6554] font-bold underline text-[11px] block mt-1">
                                             📍 View Google Maps Pin Link ↗

@@ -97,7 +97,7 @@ function OrderDrawer({ order, onClose, statusOptions }) {
                                         <p className="font-bold text-stone-900">{item.product_title}</p>
                                         <p className="text-stone-500 font-mono">{item.variant_sku} &times; {item.quantity}</p>
                                     </div>
-                                    <span className="font-semibold text-[#8C6554]">${(item.total_price / 100).toFixed(2)}</span>
+                                    <span className="font-semibold text-[#8C6554]">{(item.total_price / 100).toFixed(2)} Birr</span>
                                 </div>
                             ))}
                         </div>
@@ -181,7 +181,7 @@ export default function Index({ orders, statusOptions, filters }) {
                                         <p className="font-bold text-stone-900">{order.customer_name}</p>
                                         <p className="text-stone-500 font-mono text-[11px]">{order.customer_phone}</p>
                                     </td>
-                                    <td className="p-4 font-bold text-stone-900">${(order.total / 100).toFixed(2)}</td>
+                                    <td className="p-4 font-bold text-stone-900">{(order.total / 100).toFixed(2)} Birr</td>
                                     <td className="p-4">
                                         <span className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-full border ${order.payment_status === 'paid' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-amber-100 text-amber-800 border-amber-200'}`}>
                                             {order.payment_status}

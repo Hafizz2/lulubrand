@@ -11,6 +11,9 @@ class SizeGuide extends Model
 
     protected $fillable = [
         'name',
+        'us_size',
+        'uk_size',
+        'eu_size',
         'bust',
         'waist',
         'hips',

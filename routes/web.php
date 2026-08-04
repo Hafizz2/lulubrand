@@ -13,7 +13,10 @@ use App\Http\Controllers\Admin\BankSettingController;
 use App\Http\Controllers\Admin\CheckoutSettingController;
 use App\Http\Controllers\Admin\ScheduleSettingController;
 use App\Http\Controllers\Admin\SizeGuideSettingController;
+use App\Http\Controllers\Admin\ContentSettingController;
 use App\Http\Controllers\Admin\TelegramSettingsController;
+use App\Http\Controllers\Admin\DeliverySettingController;
+use App\Http\Controllers\Admin\OutfitController as AdminOutfitController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\TelegramWebhookController;
 use App\Http\Controllers\Storefront\Auth\CustomerAuthController;
@@ -21,6 +24,7 @@ use App\Http\Controllers\Storefront\CartController;
 use App\Http\Controllers\Storefront\CatalogController;
 use App\Http\Controllers\Storefront\CheckoutController;
 use App\Http\Controllers\Storefront\OrderTrackingController;
+use App\Http\Controllers\Storefront\PushSubscriptionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -33,7 +37,19 @@ Route::get('/', [CatalogController::class, 'home'])->name('storefront.home');
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog.index');
 Route::get('/categories', [CatalogController::class, 'categoriesIndex'])->name('categories.index');
 Route::get('/category/{slug}', [CatalogController::class, 'index'])->name('catalog.category');
-Route::get('/product/{slug}', [CatalogController::class, 'show'])->name('catalog.show');
+// Product detail — routes by product_code (not slug) for clean SEO-friendly URLs
+Route::get('/product/{product_code}', [CatalogController::class, 'show'])->name('catalog.show');
+Route::get('/outfit/{slug}', [CatalogController::class, 'showOutfit'])->name('catalog.outfit');
+
+// Language toggle
+Route::post('/language/{lang}', function (string $lang) {
+    $allowed = ['en', 'am'];
+    if (in_array($lang, $allowed, true)) {
+        session(['locale' => $lang]);
+        app()->setLocale($lang);
+    }
+    return back();
+})->name('language.switch');
 
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::get('/cart/summary', [CartController::class, 'summary'])->name('cart.summary');
@@ -48,6 +64,14 @@ Route::post('/checkout', [CheckoutController::class, 'store'])->middleware('thro
 Route::get('/order/{order_number}', [OrderTrackingController::class, 'show'])->name('order.confirmation');
 Route::get('/track', [OrderTrackingController::class, 'showLookupForm'])->name('order.track');
 Route::post('/track', [OrderTrackingController::class, 'lookup'])->middleware('throttle:10,1')->name('order.lookup');
+
+// PWA Push Notification Subscriptions
+Route::post('/push/subscribe', [PushSubscriptionController::class, 'subscribe'])
+    ->middleware('throttle:10,1')
+    ->name('push.subscribe');
+Route::post('/push/unsubscribe', [PushSubscriptionController::class, 'unsubscribe'])
+    ->middleware('throttle:10,1')
+    ->name('push.unsubscribe');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [CustomerAuthController::class, 'showLoginForm'])->name('login');
@@ -102,6 +126,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/categories/{category}/update', [AdminCategoryController::class, 'update'])->name('categories.update');
         Route::post('/categories/reorder', [AdminCategoryController::class, 'reorder'])->name('categories.reorder');
         Route::delete('/categories/{category}', [AdminCategoryController::class, 'destroy'])->name('categories.destroy');
+
+        // Outfits
+        Route::get('/outfits', [AdminOutfitController::class, 'index'])->name('outfits.index');
+        Route::post('/outfits', [AdminOutfitController::class, 'store'])->name('outfits.store');
+        Route::post('/outfits/{outfit}/update', [AdminOutfitController::class, 'update'])->name('outfits.update');
+        Route::delete('/outfits/{outfit}', [AdminOutfitController::class, 'destroy'])->name('outfits.destroy');
 
         // Hero Banners
         Route::get('/hero-banners', [\App\Http\Controllers\Admin\HeroBannerController::class, 'index'])->name('hero-banners.index');
@@ -168,6 +198,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/settings/size-guide/{sizeGuide}/update', [SizeGuideSettingController::class, 'update'])->name('settings.size-guide.update');
             Route::post('/settings/size-guide/{sizeGuide}/toggle', [SizeGuideSettingController::class, 'toggle'])->name('settings.size-guide.toggle');
             Route::delete('/settings/size-guide/{sizeGuide}', [SizeGuideSettingController::class, 'destroy'])->name('settings.size-guide.destroy');
+
+            // Content & Policy Settings
+            Route::get('/settings/content', [ContentSettingController::class, 'index'])->name('settings.content');
+            Route::post('/settings/content', [ContentSettingController::class, 'update'])->name('settings.content.update');
+
+            // Delivery & Shipping Rates Settings
+            Route::get('/settings/delivery', [DeliverySettingController::class, 'index'])->name('settings.delivery');
+            Route::post('/settings/delivery', [DeliverySettingController::class, 'store'])->name('settings.delivery.store');
+            Route::post('/settings/delivery/{shippingRate}/update', [DeliverySettingController::class, 'update'])->name('settings.delivery.update');
+            Route::post('/settings/delivery/{shippingRate}/toggle', [DeliverySettingController::class, 'toggle'])->name('settings.delivery.toggle');
+            Route::delete('/settings/delivery/{shippingRate}', [DeliverySettingController::class, 'destroy'])->name('settings.delivery.destroy');
         });
     });
 });
