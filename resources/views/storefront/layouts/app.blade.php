@@ -955,7 +955,7 @@
 
                 localStorage.setItem(PUSH_GRANTED_KEY, '1');
                 const reg = await navigator.serviceWorker.ready;
-                const vapidPublicKey = '{{ config("app.vapid_public_key", "") }}';
+                const vapidPublicKey = '{{ config("services.vapid.public_key", env("VAPID_PUBLIC_KEY", "")) }}';
                 if (!vapidPublicKey) {
                     console.warn('[PWA] VAPID public key not configured in .env');
                     return;
@@ -966,7 +966,7 @@
                     applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
                 });
 
-                await fetch('/push/subscribe', {
+                const res = await fetch('/push/subscribe', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -975,12 +975,20 @@
                     },
                     body: JSON.stringify(subscription.toJSON()),
                 });
+                const data = await res.json();
 
                 localStorage.setItem(PUSH_SUBS_KEY, '1');
-                console.log('[PWA] Push subscription saved.');
+                console.log('[PWA] Push subscription saved to database:', data);
             } catch (err) {
                 console.warn('[PWA] Push subscription failed:', err);
             }
+        }
+
+        // Auto subscribe if user already gave Notification permission previously
+        if ('Notification' in window && Notification.permission === 'granted') {
+            navigator.serviceWorker.ready.then(() => {
+                requestPushPermission();
+            });
         }
 
         function urlBase64ToUint8Array(base64String) {
