@@ -21,10 +21,6 @@ class SendStatusChangedNotification implements ShouldQueue
             }
         })->first();
 
-        if (! $link) {
-            return;
-        }
-
         $statusEmoji = match ($event->newStatus) {
             'confirmed' => '✅',
             'packed'    => '📦',
@@ -35,19 +31,28 @@ class SendStatusChangedNotification implements ShouldQueue
             default     => 'ℹ️',
         };
 
-        $message = "{$statusEmoji} <b>Order Update</b>\n\n"
-            . "Your order <code>{$order->order_number}</code> status has changed:\n"
-            . "<b>" . strtoupper($event->oldStatus) . "</b> → <b>" . strtoupper($event->newStatus) . "</b>\n\n"
-            . "Track your order: " . config('app.url') . "/order/{$order->order_number}";
+        if ($link && $link->telegram_chat_id) {
+            $message = "{$statusEmoji} <b>Order Update</b>\n\n"
+                . "Your order <code>{$order->order_number}</code> status has changed:\n"
+                . "<b>" . strtoupper($event->oldStatus) . "</b> → <b>" . strtoupper($event->newStatus) . "</b>\n\n"
+                . "Track your order: " . config('app.url') . "/order/{$order->order_number}";
 
-        SendTelegramMessage::dispatch($link->telegram_chat_id, $message);
+            SendTelegramMessage::dispatch($link->telegram_chat_id, $message);
+        }
 
-        // Send Web Push notification if user has active web push subscription
+        // Send Web Push notification to customer (Registered user or Guest buyer via push subscription)
+        $pushTitle = "Order #{$order->order_number} Update {$statusEmoji}";
+        $pushBody  = "Your order status is now " . strtoupper($event->newStatus) . ". Tap to view details.";
+        $pushUrl   = url("/order/{$order->order_number}");
+
         if ($order->user_id) {
-            $pushTitle = "Order #{$order->order_number} Update {$statusEmoji}";
-            $pushBody  = "Your order status is now " . strtoupper($event->newStatus) . ". Tap to view details.";
-            $pushUrl   = url("/order/{$order->order_number}");
             \App\Jobs\SendWebPushNotification::dispatch($order->user_id, $pushTitle, $pushBody, $pushUrl);
+        } else {
+            // Guest order: Send Web Push to the device that placed this order
+            $sub = \App\Models\PushSubscription::where('session_id', $order->session_id)->first();
+            if ($sub) {
+                app(\App\Services\WebPushService::class)->sendToSubscription($sub, $pushTitle, $pushBody, $pushUrl);
+            }
         }
     }
 }
