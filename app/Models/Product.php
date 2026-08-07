@@ -21,11 +21,16 @@ class Product extends Model
         'base_price',
         'status',
         'is_new',
+        'is_presale',
+        'presale_available_at',
+        'presale_note',
         'published_at',
     ];
 
     protected $casts = [
         'is_new' => 'boolean',
+        'is_presale' => 'boolean',
+        'presale_available_at' => 'datetime',
         'published_at' => 'datetime',
         'base_price' => 'integer',
     ];

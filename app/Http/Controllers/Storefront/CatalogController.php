@@ -283,4 +283,16 @@ class CatalogController extends Controller
             'sizeGuideUnit'
         ));
     }
+
+    /**
+     * Display a listing of all outfits.
+     */
+    public function outfits()
+    {
+        $outfits = Outfit::where('status', 'published')
+            ->orderBy('id', 'desc')
+            ->paginate(12);
+
+        return view('storefront.catalog.outfits', compact('outfits'));
+    }
 }

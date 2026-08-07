@@ -48,6 +48,11 @@ class CheckoutController extends Controller
         $blockedDaysOfWeek = json_decode($settings['blocked_days_of_week'] ?? '[]', true);
         $shippingRates = \App\Models\ShippingRate::where('is_active', true)->get();
 
+        $loyaltyService = app(\App\Services\LoyaltyService::class);
+        $loyaltyEnabled = $loyaltyService->isEnabled();
+        $userPoints = Auth::check() ? $loyaltyService->getBalance(Auth::user()) : 0;
+        $loyaltySettings = $loyaltyService->getSettings();
+
         return view('storefront.checkout.index', compact(
             'summary',
             'settings',
@@ -55,7 +60,10 @@ class CheckoutController extends Controller
             'pickupTimes',
             'blockedDates',
             'blockedDaysOfWeek',
-            'shippingRates'
+            'shippingRates',
+            'loyaltyEnabled',
+            'userPoints',
+            'loyaltySettings'
         ));
     }
 
@@ -121,7 +129,27 @@ class CheckoutController extends Controller
                 // 2. Final Total Calculation
                 $subtotal = $summary['subtotal'];
                 $discountAmount = $summary['discount_amount'];
-                $finalTotal = max(0, $subtotal - $discountAmount + $deliveryFeeCents);
+
+                // Loyalty Points Redemption
+                $loyaltyDiscountCents = 0;
+                $pointsRedeemed = 0;
+                if (Auth::check() && !empty($validated['redeem_points']) && (int)$validated['redeem_points'] > 0) {
+                    $pointsToRedeem = (int) $validated['redeem_points'];
+                    $loyaltyService = app(\App\Services\LoyaltyService::class);
+                    
+                    if ($loyaltyService->isEnabled()) {
+                        $minRedeem = (int) \App\Models\SystemSetting::get('loyalty_min_redeem', '50');
+                        $userPoints = $loyaltyService->getBalance(Auth::user());
+                        
+                        if ($pointsToRedeem >= $minRedeem && $userPoints >= $pointsToRedeem) {
+                            // Subtraction happens inside redeemPoints which also returns the discount amount
+                            $loyaltyDiscountCents = $loyaltyService->redeemPoints(Auth::user(), $pointsToRedeem);
+                            $pointsRedeemed = $pointsToRedeem;
+                        }
+                    }
+                }
+
+                $finalTotal = max(0, $subtotal - $discountAmount - $loyaltyDiscountCents + $deliveryFeeCents);
 
                 // 3. Deposit vs Balance Calculation
                 $depositCents = 0;
@@ -154,8 +182,8 @@ class CheckoutController extends Controller
                     'payment_status' => 'unpaid',
                     'logistics_mode' => $validated['logistics_mode'],
                     'delivery_fee' => $deliveryFeeCents,
-                    'preferred_date' => $validated['preferred_date'],
-                    'preferred_time' => $validated['preferred_time'],
+                    'preferred_date' => $validated['preferred_date'] ?? null,
+                    'preferred_time' => $validated['preferred_time'] ?? null,
                     'google_maps_link' => $validated['google_maps_link'] ?? null,
                     'payment_proof' => $paymentProofUrl,
                     'confirmed_transaction_id' => $validated['confirmed_transaction_id'] ?? null,
@@ -165,6 +193,9 @@ class CheckoutController extends Controller
                     'subtotal' => $subtotal,
                     'discount_amount' => $discountAmount,
                     'total' => $finalTotal,
+                    'loyalty_points_earned' => 0, // calculated later in the listener
+                    'loyalty_points_redeemed' => $pointsRedeemed,
+                    'loyalty_discount_cents' => $loyaltyDiscountCents,
                     'notes' => $validated['notes'] ?? null,
                 ]);
 

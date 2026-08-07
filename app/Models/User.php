@@ -16,6 +16,8 @@ class User extends Authenticatable
         'phone',
         'role',
         'password',
+        'phone_verified_at',
+        'telegram_chat_id',
     ];
 
     protected $hidden = [
@@ -27,6 +29,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'phone_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -38,11 +41,31 @@ class User extends Authenticatable
 
     public function isStaff(): bool
     {
-        return in_array($this->role, ['owner', 'staff']);
+        return in_array($this->role, ['owner', 'staff', 'cashier']);
+    }
+
+    public function isCashier(): bool
+    {
+        return $this->role === 'cashier';
     }
 
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function wishlist()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
+    public function loyaltyPoints()
+    {
+        return $this->hasOne(LoyaltyPoint::class);
+    }
+
+    public function loyaltyTransactions()
+    {
+        return $this->hasMany(LoyaltyTransaction::class);
     }
 }

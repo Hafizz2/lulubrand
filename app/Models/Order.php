@@ -36,6 +36,9 @@ class Order extends Model
         'total',
         'telegram_chat_id',
         'notes',
+        'loyalty_points_earned',
+        'loyalty_points_redeemed',
+        'loyalty_discount_cents',
     ];
 
     protected $casts = [
@@ -45,6 +48,9 @@ class Order extends Model
         'deposit_amount' => 'integer',
         'balance_due' => 'integer',
         'total' => 'integer',
+        'loyalty_points_earned' => 'integer',
+        'loyalty_points_redeemed' => 'integer',
+        'loyalty_discount_cents' => 'integer',
         'preferred_date' => 'date:Y-m-d',
     ];
 

@@ -8,16 +8,16 @@
     <!-- Breadcrumb & Header Area -->
     <div class="mb-8">
         <div class="flex justify-center items-center space-x-2 text-[10px] uppercase tracking-[0.1em] text-[#666666] mb-4">
-            <a href="/" class="hover:text-[#1A1A1A]">HOME</a>
+            <a href="/" class="hover:text-[#1A1A1A]">{{ __('nav_home') }}</a>
             <span>/</span>
-            <span class="text-[#1A1A1A]">{{ $currentCategory ? $currentCategory->name : 'ALL CLOTHING' }}</span>
+            <span class="text-[#1A1A1A]">{{ $currentCategory ? $currentCategory->name : __('catalog_all_clothing') }}</span>
         </div>
 
         <h1 class="text-[24px] sm:text-[32px] font-serif font-normal text-[#1A1A1A] text-center mb-2">
-            {{ $currentCategory ? $currentCategory->name : 'All Clothing' }}
+            {{ $currentCategory ? $currentCategory->name : __('catalog_all_clothing') }}
         </h1>
         <div class="text-[11px] font-medium text-[#666666] uppercase tracking-[0.1em] text-center mt-2">
-            {{ $products->total() ?? 0 }} PRODUCTS
+            {{ __('catalog_products_count', ['count' => $products->total() ?? 0]) }}
         </div>
     </div>
 
@@ -25,7 +25,7 @@
     <div class="mb-8 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
         <div class="flex justify-center items-center space-x-8 min-w-max pb-1 border-b border-[#EEEEEE]">
             <a href="/catalog" class="pb-3 {{ !$currentCategory ? 'border-b-[2px] border-[#1A1A1A] text-[#1A1A1A]' : 'border-b-[2px] border-transparent text-[#666666] hover:text-[#1A1A1A]' }} text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors -mb-[1px]">
-                All Styles
+                {{ __('catalog_all_styles') }}
             </a>
             @foreach($categories as $cat)
                 <a href="/category/{{ $cat->slug }}" class="pb-3 {{ ($currentCategory && ($currentCategory->id === $cat->id || $currentCategory->parent_id === $cat->id)) ? 'border-b-[2px] border-[#1A1A1A] text-[#1A1A1A]' : 'border-b-[2px] border-transparent text-[#666666] hover:text-[#1A1A1A]' }} text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors -mb-[1px]">
@@ -38,18 +38,18 @@
     <!-- Filter + Sort Bar -->
     <div class="flex items-center justify-between py-4 border-b border-[#EEEEEE] mb-8">
         <button type="button" @click="mobileFiltersOpen = true" class="flex items-center space-x-2 md:hidden text-[#1A1A1A]">
-            <span class="text-[10px] font-semibold uppercase tracking-[0.1em]">Filter & Sort</span>
+            <span class="text-[10px] font-semibold uppercase tracking-[0.1em]">{{ __('catalog_filter_sort') }}</span>
             <span x-show="activeFilterCount > 0" class="text-[10px] font-medium ml-1" x-text="'(' + activeFilterCount + ')'"></span>
         </button>
         <div class="hidden md:flex items-center text-[#1A1A1A]">
-             <span class="text-[10px] font-semibold uppercase tracking-[0.1em]">Filter & Sort</span>
+             <span class="text-[10px] font-semibold uppercase tracking-[0.1em]">{{ __('catalog_filter_sort') }}</span>
         </div>
 
         <div class="flex items-center relative">
             <select x-model="filters.sort" @change="applyFilters()" class="appearance-none bg-transparent text-[10px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A] focus:outline-none pr-6 cursor-pointer">
-                <option value="newest">Newest</option>
-                <option value="price_asc">Price: Low to High</option>
-                <option value="price_desc">Price: High to Low</option>
+                <option value="newest">{{ __('sort_newest') }}</option>
+                <option value="price_asc">{{ __('sort_price_asc') }}</option>
+                <option value="price_desc">{{ __('sort_price_desc') }}</option>
             </select>
             <div class="pointer-events-none absolute right-0 flex items-center text-[#1A1A1A]">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7"/></svg>
@@ -62,9 +62,9 @@
         <!-- Desktop Sidebar Faceted Filters -->
         <aside class="hidden md:block w-[240px] flex-shrink-0 sticky top-24">
             <div class="flex items-center justify-between mb-6">
-                <span class="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A]">Filters</span>
+                <span class="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A]">{{ __('catalog_filter_sort') }}</span>
                 <button type="button" @click="resetFilters()" class="text-[10px] uppercase tracking-[0.1em] text-[#666666] underline hover:text-[#1A1A1A]">
-                    Reset
+                    {{ __('catalog_reset') }}
                 </button>
             </div>
 
@@ -74,7 +74,7 @@
             @endphp
             @if($sizeAttr)
                 <div class="border-t border-[#EEEEEE] py-6">
-                    <h4 class="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A] mb-4">Size</h4>
+                    <h4 class="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A] mb-4">{{ __('size_guide_size') }}</h4>
                     <div class="flex flex-wrap gap-2">
                         @foreach($sizeAttr->values as $sVal)
                             <label class="cursor-pointer">
@@ -94,7 +94,7 @@
             @endphp
             @if($colorAttr)
                 <div class="border-t border-[#EEEEEE] py-6">
-                    <h4 class="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A] mb-4">Color</h4>
+                    <h4 class="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A] mb-4">{{ __('product_colour') }}</h4>
                     <div class="flex flex-wrap gap-3">
                         @foreach($colorAttr->values as $cVal)
                             <label class="cursor-pointer" title="{{ $cVal->value }}">
@@ -120,7 +120,7 @@
             <div class="border-t border-[#EEEEEE] py-6">
                 <label class="flex items-center space-x-3 cursor-pointer">
                     <input type="checkbox" x-model="filters.in_stock" @change="applyFilters()" class="w-4 h-4 border-[#E5E5E5] text-[#1A1A1A] rounded-none focus:ring-0 focus:ring-offset-0 bg-transparent">
-                    <span class="text-[11px] font-medium uppercase tracking-[0.1em] text-[#1A1A1A]">In Stock Only</span>
+                    <span class="text-[11px] font-medium uppercase tracking-[0.1em] text-[#1A1A1A]">{{ __('catalog_in_stock_only') }}</span>
                 </label>
             </div>
         </aside>
@@ -138,7 +138,7 @@
                  class="absolute inset-y-0 right-0 w-[85%] max-w-md bg-white flex flex-col justify-between shadow-xl">
                 
                 <div class="flex items-center justify-between px-6 py-5 border-b border-[#EEEEEE]">
-                    <h3 class="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A]">Filters</h3>
+                    <h3 class="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A]">{{ __('catalog_filter_sort') }}</h3>
                     <button @click="mobileFiltersOpen = false" class="text-[#1A1A1A] hover:text-[#666666]">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
@@ -147,14 +147,14 @@
                 <div class="flex-1 overflow-y-auto px-6 py-4">
                     <div class="flex justify-end mb-4">
                         <button type="button" @click="resetFilters()" class="text-[10px] uppercase tracking-[0.1em] text-[#666666] underline hover:text-[#1A1A1A]">
-                            Reset All
+                            {{ __('catalog_reset') }}
                         </button>
                     </div>
 
                     <!-- Mobile Size -->
                     @if($sizeAttr)
                         <div class="py-4">
-                            <h4 class="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A] mb-4">Size</h4>
+                            <h4 class="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A] mb-4">{{ __('size_guide_size') }}</h4>
                             <div class="flex flex-wrap gap-2">
                                 @foreach($sizeAttr->values as $sVal)
                                     <label class="cursor-pointer">
@@ -171,7 +171,7 @@
                     <!-- Mobile Colours -->
                     @if($colorAttr)
                         <div class="border-t border-[#EEEEEE] py-6">
-                            <h4 class="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A] mb-4">Color</h4>
+                            <h4 class="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A] mb-4">{{ __('product_colour') }}</h4>
                             <div class="flex flex-wrap gap-3">
                                 @foreach($colorAttr->values as $cVal)
                                     <label class="cursor-pointer" title="{{ $cVal->value }}">
@@ -197,14 +197,14 @@
                     <div class="border-t border-[#EEEEEE] py-6">
                         <label class="flex items-center space-x-3 cursor-pointer">
                             <input type="checkbox" x-model="filters.in_stock" class="w-4 h-4 border-[#E5E5E5] text-[#1A1A1A] rounded-none focus:ring-0 focus:ring-offset-0 bg-transparent">
-                            <span class="text-[11px] font-medium uppercase tracking-[0.1em] text-[#1A1A1A]">In Stock Only</span>
+                            <span class="text-[11px] font-medium uppercase tracking-[0.1em] text-[#1A1A1A]">{{ __('catalog_in_stock_only') }}</span>
                         </label>
                     </div>
                 </div>
 
                 <div class="p-0 border-t border-[#EEEEEE]">
                     <button @click="applyFilters(); mobileFiltersOpen = false;" class="w-full h-[50px] bg-[#1A1A1A] text-white text-[11px] font-semibold uppercase tracking-[0.1em] flex items-center justify-center rounded-none">
-                        Apply Filters <span x-show="activeFilterCount > 0" class="ml-1" x-text="'(' + activeFilterCount + ')'"></span>
+                        {{ __('catalog_apply_filters') }} <span x-show="activeFilterCount > 0" class="ml-1" x-text="'(' + activeFilterCount + ')'"></span>
                     </button>
                 </div>
             </div>
@@ -225,7 +225,7 @@
             <!-- Load More Button -->
             <div x-show="hasMore && !loading" class="mt-16 text-center">
                 <button @click="loadMore()" class="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A] underline underline-offset-4 hover:text-[#666666] transition-colors">
-                    Load More
+                    {{ __('catalog_load_more') }}
                 </button>
             </div>
         </div>

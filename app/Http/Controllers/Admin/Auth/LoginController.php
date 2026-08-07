@@ -36,6 +36,11 @@ class LoginController extends Controller
 
             $request->session()->regenerate();
 
+            if ($user->isCashier()) {
+                return redirect()->intended(route('admin.loyalty.index'))
+                    ->with('success', "Welcome back, {$user->name}!");
+            }
+
             return redirect()->intended(route('admin.dashboard'))
                 ->with('success', "Welcome back, {$user->name}!");
         }

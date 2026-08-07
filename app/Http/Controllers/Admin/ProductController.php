@@ -91,7 +91,7 @@ class ProductController extends Controller
                     'id' => $product->id,
                     'title' => $product->title,
                     'product_code' => $product->product_code,
-                    'image_url' => $product->primaryImage ? $product->primaryImage->url : 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=800&q=80',
+                    'image_url' => $product->primaryImage ? $product->primaryImage->url : url('/logo.png'),
                 ];
             });
 
@@ -131,6 +131,9 @@ class ProductController extends Controller
                 'base_price' => $basePriceCents,
                 'status' => $validated['status'],
                 'is_new' => $validated['is_new'] ?? true,
+                'is_presale' => $validated['is_presale'] ?? false,
+                'presale_available_at' => $validated['presale_available_at'] ?? null,
+                'presale_note' => $validated['presale_note'] ?? null,
                 'published_at' => $validated['status'] === 'published' ? now() : null,
             ]);
 
@@ -172,7 +175,7 @@ class ProductController extends Controller
             } else {
                 $imageModels[] = ProductImage::create([
                     'product_id' => $product->id,
-                    'url' => 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=800&q=80',
+                    'url' => url('/logo.png'),
                     'sort_order' => 1,
                     'is_primary' => true,
                 ]);
@@ -268,7 +271,7 @@ class ProductController extends Controller
                     'id' => $product->id,
                     'title' => $product->title,
                     'product_code' => $product->product_code,
-                    'image_url' => $product->primaryImage ? $product->primaryImage->url : 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=800&q=80',
+                    'image_url' => $product->primaryImage ? $product->primaryImage->url : url('/logo.png'),
                 ];
             });
 
@@ -306,6 +309,9 @@ class ProductController extends Controller
                 'base_price' => (int) round($validated['base_price'] * 100),
                 'status' => $validated['status'],
                 'is_new' => $validated['is_new'] ?? false,
+                'is_presale' => $validated['is_presale'] ?? false,
+                'presale_available_at' => $validated['presale_available_at'] ?? null,
+                'presale_note' => $validated['presale_note'] ?? null,
                 'published_at' => $validated['status'] === 'published' ? ($product->published_at ?? now()) : null,
             ]);
 

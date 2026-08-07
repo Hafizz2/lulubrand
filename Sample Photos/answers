@@ -1,57 +1,300 @@
-4. Product code · Price · Photos · Sizes · Colors · Material · Stock status · Description 
+Here's a comprehensive prompt you can give to an AI coding assistant (or use later with me) to refactor your PWA onboarding flow.
 
-5. payment transfer Only (Banks and all) 
+---
 
-6. delivery only to all over the world ( they’ll pay for the delivery)
+```text
+I want to redesign my PWA onboarding experience to follow modern mobile UX practices similar to Starbucks, Instagram, TikTok, and other high-conversion PWAs.
 
-https://app.houseofcb.com/category?category_id=1
+The goal is to maximize install rate and notification opt-in while avoiding annoying users.
+
+========================================
+GENERAL GOALS
+========================================
+
+• Make every prompt feel like a native mobile bottom sheet.
+• Use smooth animations.
+• Never overwhelm users with multiple permission requests.
+• Focus on explaining BENEFITS instead of FEATURES.
+• Keep the experience modern, minimal, and premium.
+• Mobile-first design.
+
+========================================
+PWA INSTALL PROMPT
+========================================
+
+Do NOT ask users to install immediately.
+
+Instead, intelligently decide based on engagement.
+
+Priority triggers:
+
+1. User successfully places an order (highest priority)
+2. User logs into their account
+3. User creates a wishlist
+4. User has visited around 8–10 pages
+5. User has spent meaningful time on the website
 
 
-Here is a detailed breakdown of both landing pages, including their layout, colors, category alignments, imagery, and design characteristics.
 
-filter by many things, color, size, type and moore
+========================================
+DISMISS LOGIC
+========================================
 
-ReferenceError: Link is not defined at admin-C_CER8BF.js:124:123406 at Array.map (<anonymous>) at jO (admin-C_CER8BF.js:124:123240)
-    at Fd (admin-C_CER8BF.js:122:16998)
-    at Vx (admin-C_CER8BF.js:124:43963)
-    at Hx (admin-C_CER8BF.js:124:39727)
-    at A2 (admin-C_CER8BF.js:124:39655)
-    at _l (admin-C_CER8BF.js:124:39508)
-    at _c (admin-C_CER8BF.js:124:35875)
-    at Ux (admin-C_CER8BF.js:124:34826)
-hc @ admin-C_CER8BF.js:124
-admin-C_CER8BF.js:124 Uncaught ReferenceError: Link is not defined
-    at admin-C_CER8BF.js:124:123406
-    at Array.map (<anonymous>)
-    at jO (admin-C_CER8BF.js:124:123240)
-    at Fd (admin-C_CER8BF.js:122:16998)
-    at Vx (admin-C_CER8BF.js:124:43963)
-    at Hx (admin-C_CER8BF.js:124:39727)
-    at A2 (admin-C_CER8BF.js:124:39655)
-    at _l (admin-C_CER8BF.js:124:39508)
-    at _c (admin-C_CER8BF.js:124:35875)
-    at Ux (admin-C_CER8BF.js:124:34826)
+Do NOT permanently dismiss the prompt.
 
+Instead:
 
-    getting errors like this the site not opening stuck shoing loading logo Uncaught ReferenceError: miniCart is not defined at [Alpine] miniCart() (eval at <anonymous> (storefront-XASQhUmL.js:5:738), <anonymous>:3:16) And storefront-XASQhUmL.js:5 Alpine Warning: x-for templates require a single root element, additional elements will be ignored.
+Save the dismissal timestamp.
 
+Show it again after 3 days.
 
-    component: "Products/Create", props: {,…}, url: "/admin/products/create",…}
-component
-: 
-"Products/Create"
-props
-: 
-{,…}
-attributes
-: 
-[{id: 1, name: "Size", slug: "size", created_at: "2026-07-27T13:25:38.000000Z",…},…]
-auth
-: 
-{,…}
-categories
-: 
-[{id: 1, parent_id: null, name: "Dresses", slug: "dresses",…},…]
-errors
-: 
-{variants.0.attribute_value_ids.1: "The variants.0.attribute_value_ids.1 field must be an integer.",…}flash: {success: null, error: null}sharedProps: ["errors", "auth", "flash"]0: "errors"1: "auth"2: "flash"url: "/admin/products/create"version: "dee27b38850f190261f42c9f75601301"
+If installed:
+
+Save installed status permanently.
+
+Listen for:
+
+window.addEventListener('appinstalled', ...)
+
+instead of relying only on beforeinstallprompt.
+
+========================================
+INSTALL COPY
+========================================
+
+Use modern wording.
+
+Title:
+
+Get the Full LULU Experience
+
+Body:
+
+Install LULU for faster shopping, instant order updates, and one-tap access directly from your home screen.
+
+Buttons:
+
+Install App
+Maybe Later
+
+Avoid technical terms like:
+
+PWA
+Progressive Web App
+
+========================================
+IOS INSTALL PROMPT
+========================================
+
+Explain WHY.
+
+Example:
+
+Install LULU in seconds.
+
+Tap Share and choose Add to Home Screen to enjoy faster shopping and quick access anytime.
+
+Button:
+
+Got It
+
+========================================
+NOTIFICATION FLOW
+========================================
+
+Never request notification permission immediately after installation.
+
+Instead:
+
+User installs app
+
+↓
+
+User uses app
+
+↓
+
+Places an order
+
+OR
+
+Returns later
+
+↓
+
+Ask for notifications.
+
+This should feel earned.
+
+========================================
+NOTIFICATION COPY
+========================================
+
+Title:
+
+Never Miss an Update
+
+Body:
+
+Receive order confirmations, shipping updates, delivery alerts, and exclusive offers right on your device.
+
+Buttons:
+
+Allow Notifications
+Not Now
+
+Do NOT use:
+
+Enable Notifications
+
+========================================
+NOTIFICATION COOLDOWN
+========================================
+
+If user dismisses notification prompt:
+
+Store timestamp.
+
+Ask again after 3 days.
+
+Do not permanently suppress it.
+
+========================================
+ANIMATIONS
+========================================
+
+Use a premium bottom-sheet animation.
+
+Initial state:
+
+opacity: 0;
+transform: translateY(30px) scale(.96);
+
+Visible:
+
+opacity: 1;
+transform: translateY(0) scale(1);
+
+Animation:
+
+300ms
+ease
+
+========================================
+TIMING
+========================================
+
+Avoid fixed delays when possible.
+
+Prefer:
+
+requestIdleCallback()
+
+with a setTimeout fallback.
+
+Only display prompts when the UI is idle.
+
+========================================
+EVENT LISTENERS
+========================================
+
+Prevent duplicate listeners.
+
+Do NOT attach addEventListener() every time the prompt opens.
+
+Use:
+
+button.onclick = ...
+
+or initialize listeners once.
+
+========================================
+INSTALL DETECTION
+========================================
+
+Detect:
+
+display-mode: standalone
+
+navigator.standalone
+
+appinstalled event
+
+Keep localStorage synchronized with the install status.
+
+========================================
+OVERALL FLOW
+========================================
+
+First visit
+
+↓
+
+No prompts
+
+↓
+
+User browses
+
+↓
+
+Build engagement score
+
+↓
+
+Show install prompt
+
+↓
+
+Dismiss
+
+↓
+
+Wait 3 days
+
+↓
+
+Ask again
+
+↓
+
+User installs
+
+↓
+
+Uses app
+
+↓
+
+Places order
+
+↓
+
+Show notification prompt
+
+↓
+
+Dismiss
+
+↓
+
+Wait 14 days
+
+↓
+
+Ask again
+
+========================================
+CODE REQUIREMENTS
+========================================
+
+• Keep code clean and modular.
+• Separate engagement logic from UI logic.
+• Avoid duplicated code.
+• Prevent duplicate event listeners.
+• Make it easy to add future onboarding steps.
+• Keep Laravel compatibility.
+• Preserve existing functionality where possible while improving architecture and UX.
+```
+
+This prompt gives enough context and specific requirements to produce a much more polished onboarding system that balances conversion with a good user experience.

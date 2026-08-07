@@ -40,6 +40,9 @@ export default function Edit({ product, categories, attributes }) {
         material: product.material || '',
         status: product.status || 'published',
         is_new: product.is_new ?? false,
+        is_presale: product.is_presale ?? false,
+        presale_available_at: product.presale_available_at ? product.presale_available_at.substring(0, 10) : '',
+        presale_note: product.presale_note || '',
         description: product.description || '',
         images: product.images ? product.images.map(img => ({
             id: img.id,
@@ -356,18 +359,61 @@ export default function Edit({ product, categories, attributes }) {
                             </select>
                         </div>
 
-                        <div className="flex items-center space-x-3 pt-6">
+                        <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                            <div className="flex items-center space-x-3">
+                                <input
+                                    type="checkbox"
+                                    id="is_new"
+                                    checked={data.is_new}
+                                    onChange={(e) => setData('is_new', e.target.checked)}
+                                    className="w-5 h-5 text-[#8C6554] border-[#E6DFD5] rounded focus:ring-[#8C6554]"
+                                />
+                                <label htmlFor="is_new" className="text-xs font-bold uppercase tracking-wider text-stone-900">
+                                    Mark as New Arrival
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Pre-Sale Options */}
+                    <div className="p-4 bg-[#FAF8F5] border border-[#E6DFD5] rounded-xl space-y-3">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <label className="text-xs font-bold uppercase text-[#8C6554]">Pre-Sale Product</label>
+                                <p className="text-[11px] text-stone-500">Mark this product as Pre-Sale if it's not yet in physical store inventory.</p>
+                            </div>
                             <input
                                 type="checkbox"
-                                id="is_new"
-                                checked={data.is_new}
-                                onChange={(e) => setData('is_new', e.target.checked)}
-                                className="w-5 h-5 text-[#8C6554] border-[#E6DFD5] rounded focus:ring-[#8C6554]"
+                                checked={data.is_presale}
+                                onChange={(e) => setData('is_presale', e.target.checked)}
+                                className="w-5 h-5 accent-[#8C6554] rounded cursor-pointer"
                             />
-                            <label htmlFor="is_new" className="text-xs font-bold uppercase tracking-wider text-stone-900">
-                                Mark as New Arrival
-                            </label>
                         </div>
+
+                        {data.is_presale && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-[#E6DFD5]">
+                                <div>
+                                    <label className="block text-xs font-semibold uppercase text-stone-600 mb-1">Expected Availability / Dispatch Date</label>
+                                    <input
+                                        type="date"
+                                        value={data.presale_available_at}
+                                        onChange={(e) => setData('presale_available_at', e.target.value)}
+                                        className="w-full px-4 py-2.5 bg-white border border-[#E6DFD5] rounded-xl text-sm text-stone-900 focus:outline-none focus:border-[#8C6554]"
+                                    />
+                                    {errors.presale_available_at && <p className="text-xs text-rose-600 mt-1">{errors.presale_available_at}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold uppercase text-stone-600 mb-1">Pre-Sale Note for Customers</label>
+                                    <input
+                                        type="text"
+                                        value={data.presale_note}
+                                        onChange={(e) => setData('presale_note', e.target.value)}
+                                        placeholder="e.g. Ships directly after official release on Sept 1st"
+                                        className="w-full px-4 py-2.5 bg-white border border-[#E6DFD5] rounded-xl text-sm text-stone-900 focus:outline-none focus:border-[#8C6554]"
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div>

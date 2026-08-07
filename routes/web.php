@@ -25,6 +25,10 @@ use App\Http\Controllers\Storefront\CatalogController;
 use App\Http\Controllers\Storefront\CheckoutController;
 use App\Http\Controllers\Storefront\OrderTrackingController;
 use App\Http\Controllers\Storefront\PushSubscriptionController;
+use App\Http\Controllers\Storefront\ProfileController;
+use App\Http\Controllers\Storefront\WishlistController;
+use App\Http\Controllers\Admin\LoyaltyController;
+use App\Http\Controllers\Admin\LoyaltySettingController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -40,6 +44,7 @@ Route::get('/category/{slug}', [CatalogController::class, 'index'])->name('catal
 // Product detail — routes by product_code (not slug) for clean SEO-friendly URLs
 Route::get('/product/{product_code}', [CatalogController::class, 'show'])->name('catalog.show');
 Route::get('/outfit/{slug}', [CatalogController::class, 'showOutfit'])->name('catalog.outfit');
+Route::get('/outfits', [CatalogController::class, 'outfits'])->name('catalog.outfits');
 
 // Language toggle
 Route::post('/language/{lang}', function (string $lang) {
@@ -81,6 +86,22 @@ Route::middleware('guest')->group(function () {
 });
 Route::post('/logout', [CustomerAuthController::class, 'logout'])->middleware('auth')->name('logout');
 
+// Customer Account Routes
+Route::middleware('auth')->prefix('account')->name('account.')->group(function () {
+    Route::get('/', [ProfileController::class, 'points'])->name('points');
+    Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
+    Route::post('/update', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/orders', [ProfileController::class, 'orders'])->name('orders');
+    Route::get('/wishlist', [ProfileController::class, 'wishlist'])->name('wishlist');
+});
+
+// Wishlist AJAX Routes
+Route::post('/wishlist/toggle/{product}', [WishlistController::class, 'toggle'])
+    ->middleware('auth')
+    ->name('wishlist.toggle');
+Route::get('/wishlist/status', [WishlistController::class, 'status'])
+    ->name('wishlist.status');
+
 /*
 |--------------------------------------------------------------------------
 | Telegram Webhook (public, CSRF-exempt, rate-limited)
@@ -109,6 +130,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Dashboard
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+        // Loyalty - Cashier Interface (accessible by staff + cashier + owner)
+        Route::get('/loyalty', [LoyaltyController::class, 'index'])->name('loyalty.index');
+        Route::get('/loyalty/search', [LoyaltyController::class, 'search'])->name('loyalty.search');
+        Route::get('/loyalty/customer/{user}', [LoyaltyController::class, 'show'])->name('loyalty.show');
+        Route::post('/loyalty/award', [LoyaltyController::class, 'award'])->name('loyalty.award');
+        Route::post('/loyalty/redeem', [LoyaltyController::class, 'redeem'])->name('loyalty.redeem');
 
         // Products
         Route::get('/products', [AdminProductController::class, 'index'])->name('products.index');
@@ -167,6 +195,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::delete('/settings/telegram/webhook', [TelegramSettingsController::class, 'deleteWebhook'])->name('settings.telegram.webhook.delete');
             Route::post('/settings/telegram/preview', [TelegramSettingsController::class, 'previewBroadcast'])->name('settings.telegram.preview');
             Route::post('/settings/telegram/broadcast', [TelegramSettingsController::class, 'broadcast'])->name('settings.telegram.broadcast');
+
+            // Web Push Broadcast Panel
+            Route::get('/push-broadcast', [\App\Http\Controllers\Admin\PushBroadcastController::class, 'index'])->name('push-broadcast.index');
+            Route::post('/push-broadcast', [\App\Http\Controllers\Admin\PushBroadcastController::class, 'broadcast'])->name('push-broadcast.broadcast');
+
+            Route::get('/settings/loyalty', [LoyaltySettingController::class, 'index'])->name('settings.loyalty');
+            Route::post('/settings/loyalty', [LoyaltySettingController::class, 'update'])->name('settings.loyalty.update');
 
             // User & Staff Management
             Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');

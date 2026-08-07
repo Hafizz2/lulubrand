@@ -40,7 +40,7 @@ class Category extends Model
     public function getImageUrlAttribute(?string $value): string
     {
         if (empty($value)) {
-            return 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=400&q=80';
+            return asset('logo.png');
         }
 
         if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://') || str_starts_with($value, 'data:image/')) {

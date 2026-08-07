@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import AdminLayout from '../../Layouts/AdminLayout';
 import ProductSelector from '../../Components/ProductSelector';
@@ -8,6 +8,8 @@ export default function Index({ outfits, products }) {
     const [editingOutfitId, setEditingOutfitId] = useState(null);
     const [showFormModal, setShowFormModal] = useState(false);
     const [imagePreview, setImagePreview] = useState(null);
+    const [galleryPreviews, setGalleryPreviews] = useState([]);
+    const [galleryUrls, setGalleryUrls] = useState([]);
 
     const { data, setData, post, delete: destroy, processing, errors, reset } = useForm({
         name: '',
@@ -16,7 +18,12 @@ export default function Index({ outfits, products }) {
         product_ids: [],
         image_file: null,
         image_url: '',
+        images_urls: [],
     });
+
+    useEffect(() => {
+        setData('images_urls', galleryUrls);
+    }, [galleryUrls]);
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -66,9 +73,52 @@ export default function Index({ outfits, products }) {
         reader.readAsDataURL(file);
     };
 
+    const handleGalleryFilesChange = (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 1200;
+                    const MAX_HEIGHT = 1200;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    } else {
+                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                    setGalleryUrls(prev => [...prev, dataUrl]);
+                    setGalleryPreviews(prev => [...prev, dataUrl]);
+                };
+            };
+            reader.readAsDataURL(file);
+        });
+    };
+
+    const handleRemoveGalleryImage = (index) => {
+        setGalleryUrls(prev => prev.filter((_, idx) => idx !== index));
+        setGalleryPreviews(prev => prev.filter((_, idx) => idx !== index));
+    };
+
     const handleOpenCreate = () => {
         reset();
         setImagePreview(null);
+        setGalleryPreviews([]);
+        setGalleryUrls([]);
         setIsEditing(false);
         setEditingOutfitId(null);
         setShowFormModal(true);
@@ -83,8 +133,11 @@ export default function Index({ outfits, products }) {
             product_ids: outfit.product_ids || [],
             image_file: null,
             image_url: outfit.image_url || '',
+            images_urls: outfit.images_urls || [],
         });
         setImagePreview(outfit.image_url || null);
+        setGalleryPreviews(outfit.images_urls || []);
+        setGalleryUrls(outfit.images_urls || []);
         setIsEditing(true);
         setEditingOutfitId(outfit.id);
         setShowFormModal(true);
@@ -352,11 +405,49 @@ export default function Index({ outfits, products }) {
                                                 className="hidden"
                                             />
                                         </label>
-                                        <p className="text-[9px] text-stone-400 mt-2">Supports JPG, PNG up to 10MB. Images are automatically optimized and compressed before upload.</p>
+                                        <p className="text-[9px] text-[#A38B7E] mt-2">Supports JPG, PNG up to 10MB.</p>
                                     </div>
                                 </div>
                                 {errors.image_file && <p className="text-xs text-rose-600 mt-1 font-semibold">{errors.image_file}</p>}
                                 {errors.image_url && <p className="text-xs text-rose-600 mt-1 font-semibold">{errors.image_url}</p>}
+                            </div>
+
+                            {/* Gallery Images Uploader */}
+                            <div className="border-t border-[#E6DFD5] pt-5">
+                                <label className="block text-xs font-semibold uppercase text-[#A38B7E] mb-2 tracking-wider">Outfit Gallery Images (Multiple)</label>
+                                
+                                {/* Grid of existing/new gallery previews */}
+                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 mb-4">
+                                    {galleryPreviews.map((url, idx) => (
+                                        <div key={idx} className="relative aspect-[3/4] bg-[#F9F6F0] border border-[#E6DFD5] rounded-xl overflow-hidden shadow-xs group">
+                                            <img src={url} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveGalleryImage(idx)}
+                                                className="absolute top-1 right-1 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs shadow-md transition-colors cursor-pointer"
+                                                title="Remove Image"
+                                            >
+                                                &times;
+                                            </button>
+                                        </div>
+                                    ))}
+                                    
+                                    {/* Add Button Box */}
+                                    <label className="aspect-[3/4] border-2 border-dashed border-[#E6DFD5] hover:border-[#8C6554] rounded-xl flex flex-col items-center justify-center cursor-pointer transition-colors p-2 text-center bg-[#FAF8F5]">
+                                        <svg className="w-6 h-6 text-stone-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        <span className="text-[9px] font-bold uppercase tracking-wider text-stone-500">Add Image</span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            onChange={handleGalleryFilesChange}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                </div>
+                                <p className="text-[9px] text-[#A38B7E]">Select multiple images to show under the outfit page gallery. Images are compressed automatically.</p>
                             </div>
 
                             {/* Status */}

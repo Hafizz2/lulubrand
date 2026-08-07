@@ -34,7 +34,7 @@ class HeroBanner extends Model
     public function getImageUrlAttribute(?string $value): string
     {
         if (empty($value)) {
-            return 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1800&q=80';
+            return asset('logo.png');
         }
 
         if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://') || str_starts_with($value, 'data:image/')) {

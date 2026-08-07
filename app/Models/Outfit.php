@@ -11,15 +11,38 @@ class Outfit extends Model
         'slug',
         'description',
         'image_path',
+        'images',
         'status',
         'product_ids',
     ];
 
     protected $casts = [
         'product_ids' => 'array',
+        'images' => 'array',
     ];
 
-    protected $appends = ['image_url'];
+    protected $appends = ['image_url', 'images_urls'];
+
+    /**
+     * Get absolute URLs for all outfit gallery images.
+     */
+    public function getImagesUrlsAttribute(): array
+    {
+        if (empty($this->images)) {
+            return [];
+        }
+
+        return array_map(function($path) {
+            if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, 'data:image/')) {
+                return $path;
+            }
+            $cleanPath = ltrim($path, '/');
+            if (!str_starts_with($cleanPath, 'storage/')) {
+                $cleanPath = 'storage/' . $cleanPath;
+            }
+            return asset($cleanPath);
+        }, $this->images);
+    }
 
     /**
      * Get absolute URL for outfit image.
@@ -27,7 +50,7 @@ class Outfit extends Model
     public function getImageUrlAttribute(): string
     {
         if (empty($this->image_path)) {
-            return 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80';
+            return asset('logo.png');
         }
 
         if (str_starts_with($this->image_path, 'http://') || str_starts_with($this->image_path, 'https://') || str_starts_with($this->image_path, 'data:image/')) {

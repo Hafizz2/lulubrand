@@ -41,5 +41,13 @@ class SendStatusChangedNotification implements ShouldQueue
             . "Track your order: " . config('app.url') . "/order/{$order->order_number}";
 
         SendTelegramMessage::dispatch($link->telegram_chat_id, $message);
+
+        // Send Web Push notification if user has active web push subscription
+        if ($order->user_id) {
+            $pushTitle = "Order #{$order->order_number} Update {$statusEmoji}";
+            $pushBody  = "Your order status is now " . strtoupper($event->newStatus) . ". Tap to view details.";
+            $pushUrl   = url("/order/{$order->order_number}");
+            \App\Jobs\SendWebPushNotification::dispatch($order->user_id, $pushTitle, $pushBody, $pushUrl);
+        }
     }
 }

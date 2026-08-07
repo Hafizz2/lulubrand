@@ -12,6 +12,19 @@ class CheckoutRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation()
+    {
+        if ($this->input('logistics_mode') === 'pickup') {
+            $this->merge([
+                'customer_country' => null,
+                'customer_city' => null,
+                'customer_district' => null,
+                'customer_address' => null,
+                'google_maps_link' => null,
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         $scheduleEnabled = \App\Models\SystemSetting::get('schedule_enabled', '0') === '1';
@@ -33,6 +46,7 @@ class CheckoutRequest extends FormRequest
             'payment_proof' => ['required_if:payment_method,transfer', 'nullable', 'file', 'image', 'max:5120'], // Max 5MB
             'confirmed_transaction_id' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'redeem_points' => ['nullable', 'integer', 'min:0'],
         ];
 
         return $rules;

@@ -5,6 +5,57 @@ import '../css/app.css';
 Alpine.plugin(collapse);
 window.Alpine = Alpine;
 
+// Register wishlist store in Alpine
+Alpine.store('wishlist', {
+    ids: [],
+    count: 0,
+    init() {
+        this.fetchStatus();
+    },
+    fetchStatus() {
+        fetch('/wishlist/status', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(res => res.json())
+            .then(data => {
+                this.ids = data.ids || [];
+                this.count = data.count || 0;
+            })
+            .catch(() => {});
+    },
+    toggle(productId) {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        fetch('/wishlist/toggle/' + productId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(res => {
+            if (res.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            return res.json();
+        })
+        .then(data => {
+            if (data && data.success) {
+                if (data.wishlisted) {
+                    this.ids.push(productId);
+                } else {
+                    this.ids = this.ids.filter(id => id !== productId);
+                }
+                this.count = data.count;
+                window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: data.message } }));
+            }
+        })
+        .catch(() => {});
+    },
+    has(productId) {
+        return this.ids.includes(productId);
+    }
+});
+
 // Register miniCart component in Alpine
 Alpine.data('miniCart', () => ({
     openDrawer: false,

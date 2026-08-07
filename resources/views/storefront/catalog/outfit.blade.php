@@ -8,16 +8,35 @@
 <div x-data="outfitDetail()" class="pb-20 bg-[#FAF6F6]">
     <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10 flex flex-col lg:flex-row lg:gap-12 relative">
         
-        <!-- Left: Outfit Large Hero Image -->
+        <!-- Left: Outfit Large Hero Image & Gallery -->
         <div class="w-full lg:w-7/12">
             <div class="aspect-[3/4] relative overflow-hidden bg-[#F9F9F9] border border-[#E6DFD5] rounded-xs">
-                <img src="{{ $outfit->image_url }}" 
+                <img :src="activeImage" 
                      alt="{{ $outfit->name }}" 
                      class="w-full h-full object-cover">
                 <div class="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-full text-[10px] uppercase font-bold tracking-widest text-white shadow-sm pointer-events-none">
                     Curated Outfit Look
                 </div>
             </div>
+            
+            @if(!empty($outfit->images_urls))
+                <div class="flex gap-3 mt-4 overflow-x-auto pb-2 scrollbar-none">
+                    <!-- Base primary image thumbnail -->
+                    <button type="button" @click="activeImage = '{{ $outfit->image_url }}'"
+                            class="w-20 h-26 bg-stone-100 border rounded-xs overflow-hidden flex-shrink-0 focus:outline-none transition-all cursor-pointer"
+                            :class="activeImage === '{{ $outfit->image_url }}' ? 'border-[#82203E] ring-1 ring-[#82203E]' : 'border-[#E6DFD5]'">
+                        <img src="{{ $outfit->image_url }}" alt="{{ $outfit->name }}" class="w-full h-full object-cover">
+                    </button>
+                    <!-- Gallery thumbnails -->
+                    @foreach($outfit->images_urls as $gurl)
+                        <button type="button" @click="activeImage = '{{ $gurl }}'"
+                                class="w-20 h-26 bg-stone-100 border rounded-xs overflow-hidden flex-shrink-0 focus:outline-none transition-all cursor-pointer"
+                                :class="activeImage === '{{ $gurl }}' ? 'border-[#82203E] ring-1 ring-[#82203E]' : 'border-[#E6DFD5]'">
+                            <img src="{{ $gurl }}" alt="{{ $outfit->name }}" class="w-full h-full object-cover">
+                        </button>
+                    @endforeach
+                </div>
+            @endif
         </div>
 
         <!-- Right: Outfit Information & Component Selectors -->
@@ -143,6 +162,7 @@
 <script>
 function outfitDetail() {
     return {
+        activeImage: '{{ $outfit->image_url }}',
         bundleItems: [
             @foreach($bundleProducts as $index => $bp)
             {

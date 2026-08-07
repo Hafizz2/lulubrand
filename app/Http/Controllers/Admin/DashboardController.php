@@ -11,6 +11,10 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        if (auth()->user()->isCashier()) {
+            return redirect()->route('admin.loyalty.index');
+        }
+
         $stats = [
             'total_orders' => Order::count(),
             'pending_orders' => Order::where('status', 'pending')->count(),

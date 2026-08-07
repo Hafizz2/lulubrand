@@ -25,18 +25,18 @@
                 'title' => $b->title,
                 'subtitle' => $b->subtitle ?? 'COUTURE COLLECTION',
                 'button_text' => $b->button_text ?? 'SHOP COLLECTION',
-                'button_url' => $b->button_url ?? '/categories'
+                'button_url' => $b->button_url ?? route('catalog.outfits')
             ])->values()->toArray()
             : [
                 [
-                    'image' => 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1800&q=80',
-                    'mobile_image' => 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80',
+                    'image' => asset('logo.png'),
+                    'mobile_image' => asset('logo.png'),
                     'desktop_focal' => 'center center',
                     'mobile_focal' => 'center top',
                     'title' => 'Elevate Your Style',
                     'subtitle' => 'High-Fashion Couture Collection',
                     'button_text' => 'SHOP COLLECTION',
-                    'button_url' => '/categories'
+                    'button_url' => route('catalog.outfits')
                 ]
             ];
     @endphp
@@ -132,9 +132,9 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="space-y-6">
             <div class="flex items-end justify-between border-b border-[#EEEEEE] pb-4">
-                <h2 class="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A]">New Arrivals</h2>
+                <h2 class="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A]">{{ __('home_new_arrivals') }}</h2>
                 <a href="/catalog?sort=newest" class="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A] underline underline-offset-4 hover:text-[#82203E] transition-colors">
-                    VIEW ALL &rarr;
+                    {{ __('home_view_all') }}
                 </a>
             </div>
 
@@ -142,7 +142,7 @@
                 @include('storefront.partials.product_grid', ['products' => $newArrivals])
             @else
                 <div class="text-center py-12 text-[#666666] text-[12px] uppercase tracking-[0.1em] font-semibold">
-                    New arrivals dropping soon.
+                    {{ __('home_arrivals_soon') }}
                 </div>
             @endif
         </div>
@@ -152,9 +152,9 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="space-y-6">
             <div class="flex items-end justify-between border-b border-[#EEEEEE] pb-4">
-                <h2 class="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A]">Shop by Category</h2>
+                <h2 class="text-[12px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A]">{{ __('home_shop_by_category') }}</h2>
                 <a href="/categories" class="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#1A1A1A] underline underline-offset-4 hover:text-[#82203E] transition-colors">
-                    VIEW ALL &rarr;
+                    {{ __('home_view_all') }}
                 </a>
             </div>
 
@@ -172,21 +172,26 @@
                     @endforeach
                 @else
                     <div class="text-center py-12 text-[#666666] text-[12px] uppercase tracking-[0.1em] font-semibold w-full">
-                        Categories updating.
+                        {{ __('home_categories_updating') }}
                     </div>
                 @endif
             </div>
         </div>
     </div>
 
-    <!-- Promo Banner -->
-    <div class="w-full bg-[#1A1A1A] text-white py-16 px-4 flex flex-col items-center justify-center text-center space-y-4">
-        <span class="text-[10px] uppercase tracking-[0.3em] text-[#F6DADF]">Limited Time</span>
-        <h3 class="text-[28px] sm:text-[36px] font-serif font-normal uppercase text-white leading-tight">Spring Collection — 30% OFF</h3>
-        <p class="text-[11px] tracking-[0.15em] text-[#999999] uppercase mt-2">Use code <strong class="font-bold text-white">SPRING30</strong> at checkout.</p>
-        <a href="/catalog?sort=newest" class="mt-6 bg-white text-[#1A1A1A] hover:bg-[#82203E] hover:text-white text-[10px] font-semibold uppercase tracking-[0.2em] px-10 py-3.5 rounded-none transition-colors inline-block">
-            SHOP PROMO
-        </a>
-    </div>
+    <!-- Dynamic Announcement Promo Banner -->
+    @if(!empty($announcementMessage))
+        <div class="w-full bg-[#1A1A1A] text-white py-16 sm:py-20 px-6 flex flex-col items-center justify-center text-center space-y-4">
+            <span class="text-[11px] uppercase tracking-[0.3em] font-semibold text-[#F6DADF] bg-[#82203E]/40 px-4 py-1 rounded-full border border-[#F6DADF]/20">
+                LULU COUTURE ANNOUNCEMENT
+            </span>
+            <h3 class="text-[28px] sm:text-[42px] md:text-[48px] font-serif font-normal uppercase text-white leading-tight max-w-4xl tracking-wide drop-shadow-sm">
+                {{ $announcementMessage }}
+            </h3>
+            <a href="/catalog?sort=newest" class="mt-4 bg-white text-[#1A1A1A] hover:bg-[#82203E] hover:text-white text-[11px] font-bold uppercase tracking-[0.25em] px-12 py-4 rounded-none transition-all shadow-md">
+                {{ __('nav_shop_all') }}
+            </a>
+        </div>
+    @endif
 </div>
 @endsection

@@ -30,7 +30,13 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('checkout.store') }}" enctype="multipart/form-data" id="checkoutForm" @submit="if (!validateCurrentStep(0) || !validateCurrentStep(1) || !validateCurrentStep(2)) $event.preventDefault()" class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+    <form method="POST" action="{{ route('checkout.store') }}" enctype="multipart/form-data" id="checkoutForm" @submit.prevent="placeOrder($el)" class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        <!-- Processing overlay -->
+        <div x-show="isSubmitting" x-cloak class="fixed inset-0 bg-white/70 backdrop-blur-xs flex flex-col items-center justify-center z-50 transition-all duration-300">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-[#8C6554] border-t-transparent mb-4"></div>
+            <p class="text-xs font-bold uppercase tracking-widest text-[#221F1F]">Placing your order, please wait...</p>
+        </div>
+
         @csrf
         <input type="hidden" name="customer_country" :value="form.customer_country">
         <input type="hidden" name="customer_city" :value="form.customer_city">
@@ -44,12 +50,12 @@
                 <div class="absolute -left-4 top-10 bg-[#221F1F] text-white w-8 h-8 flex items-center justify-center font-bold text-xs rounded-sm shadow-md">1</div>
                 
                 <h2 class="text-xl font-serif font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-8 border-b border-[#E6DFD5] pb-4">
-                    Contact Details
+                    {{ __('profile_personal_details') }}
                 </h2>
 
                 <div class="space-y-6">
                     <div>
-                        <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">Full Name *</label>
+                        <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">{{ __('profile_full_name') }} *</label>
                         <input type="text" name="customer_name" x-model="form.customer_name" @input="errors.customer_name = false" required 
                                :class="errors.customer_name ? 'border-[#C49A9A] ring-2 ring-[#C49A9A]/30 bg-rose-50/50' : 'border-transparent focus:border-[#8C6554]'"
                                class="w-full px-4 py-3 bg-[#F3EEE8] border text-sm text-[#221F1F] focus:outline-none transition-all rounded-sm shadow-inner">
@@ -58,21 +64,21 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">Phone Number *</label>
+                            <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">{{ __('profile_phone') }} *</label>
                             <input type="tel" name="customer_phone" x-model="form.customer_phone" @input="errors.customer_phone = false" required 
                                    :class="errors.customer_phone ? 'border-[#C49A9A] ring-2 ring-[#C49A9A]/30 bg-rose-50/50' : 'border-transparent focus:border-[#8C6554]'"
                                    class="w-full px-4 py-3 bg-[#F3EEE8] border text-sm text-[#221F1F] focus:outline-none transition-all rounded-sm shadow-inner">
                             <p x-show="errors.customer_phone" class="text-[10px] font-bold uppercase tracking-widest text-[#C49A9A] mt-1">Phone number is required.</p>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">Email Address</label>
+                            <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">{{ __('profile_email') }}</label>
                             <input type="email" name="customer_email" x-model="form.customer_email" class="w-full px-4 py-3 bg-[#F3EEE8] border border-transparent focus:border-[#8C6554] text-sm text-[#221F1F] focus:outline-none transition-colors rounded-sm shadow-inner">
                         </div>
                     </div>
 
                     <div class="flex justify-end pt-6" x-show="currentStep === 0">
                         <button type="button" @click="nextStep()" class="bg-[#221F1F] hover:bg-[#8C6554] text-white font-bold text-[11px] uppercase tracking-[0.2em] px-10 py-4 rounded-full shadow-lg transition-all">
-                            Continue
+                            {{ __('btn_continue') }}
                         </button>
                     </div>
                 </div>
@@ -157,7 +163,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">Country *</label>
-                                <select x-model="selectedCountryDropdown" @change="onCountryChange()" required
+                                <select x-model="selectedCountryDropdown" @change="onCountryChange()" :required="form.logistics_mode === 'delivery_fixed'"
                                         class="w-full px-4 py-3 bg-[#F3EEE8] border border-transparent focus:border-[#8C6554] text-sm text-[#221F1F] focus:outline-none transition-colors rounded-sm shadow-inner">
                                     <option value="Ethiopia">Ethiopia</option>
                                     <template x-for="c in countries" :key="c">
@@ -169,7 +175,7 @@
 
                             <div x-show="selectedCountryDropdown === 'Other'">
                                 <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">Custom Country Name *</label>
-                                <input type="text" x-model="form.customer_country" :required="selectedCountryDropdown === 'Other'"
+                                <input type="text" x-model="form.customer_country" :required="form.logistics_mode === 'delivery_fixed' && selectedCountryDropdown === 'Other'"
                                        placeholder="e.g. Italy, Australia"
                                        class="w-full px-4 py-3 bg-[#F3EEE8] border border-transparent focus:border-[#8C6554] text-sm text-[#221F1F] focus:outline-none transition-colors rounded-sm shadow-inner">
                             </div>
@@ -408,11 +414,7 @@
                     </div>
                     </div>
 
-                    <div class="flex justify-end pt-6" x-show="currentStep === 2">
-                        <button type="submit" class="bg-[#221F1F] hover:bg-[#8C6554] text-white font-bold text-[11px] uppercase tracking-[0.2em] px-10 py-4 rounded-full shadow-lg transition-all pointer-events-auto">
-                            Place Order
-                        </button>
-                    </div>
+
                 </div>
 
         </div>
@@ -439,11 +441,74 @@
                     @endforeach
                 </div>
 
+                <!-- Coupon Discount Section -->
+                <div class="border-t border-[#E6DFD5] pt-6 space-y-3">
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-[#221F1F]">Have a Coupon Code?</label>
+                    <div class="flex space-x-2">
+                        <input type="text" x-model="couponInput" placeholder="ENTER COUPON CODE" class="flex-1 px-3 py-2.5 bg-[#F3EEE8] border border-[#E6DFD5] text-[11px] font-mono focus:outline-none focus:border-[#8C6554] uppercase tracking-wider text-[#221F1F] rounded-sm">
+                        <button type="button" @click="applyCouponCode()" :disabled="couponApplying" class="bg-[#221F1F] hover:bg-[#8C6554] text-white text-[10px] font-bold px-4 py-2.5 uppercase tracking-widest transition-colors rounded-sm flex-shrink-0">
+                            <span x-show="!couponApplying">Apply</span>
+                            <span x-show="couponApplying" x-cloak>...</span>
+                        </button>
+                    </div>
+                    <p x-show="couponMessage" class="text-[10px] font-bold uppercase tracking-wider" :class="couponIsError ? 'text-rose-600' : 'text-emerald-700'" x-text="couponMessage"></p>
+                </div>
+
+                <!-- Loyalty Points Section -->
+                <template x-if="loyaltyEnabled && userPoints >= loyaltyMinRedeem">
+                    <div class="border-t border-[#E6DFD5] pt-6 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <label class="text-[11px] font-bold uppercase tracking-widest text-[#221F1F] flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" x-model="redeemEnabled" @change="updateLoyaltyDiscount()" class="text-[#8C6554] focus:ring-[#8C6554] rounded-sm">
+                                <span>Redeem LULU Points (Available: <span x-text="userPoints"></span> PTS)</span>
+                            </label>
+                        </div>
+                        <div x-show="redeemEnabled" x-collapse class="space-y-3 pt-2">
+                            <div class="flex items-center space-x-3">
+                                <input type="number" 
+                                       x-model.number="redeemPointsInput" 
+                                       @input="updateLoyaltyDiscount()"
+                                       :min="loyaltyMinRedeem"
+                                       :max="userPoints"
+                                       :disabled="!redeemEnabled"
+                                       class="w-24 px-3 py-2 bg-white border border-[#E6DFD5] text-xs focus:outline-none focus:border-[#8C6554] rounded-sm font-mono text-center">
+                                <span class="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Points to redeem (Min: <span x-text="loyaltyMinRedeem"></span>)</span>
+                            </div>
+                            <p class="text-[10px] text-emerald-700 font-bold uppercase tracking-wider" x-show="loyaltyDiscount > 0">
+                                {{ __('loyalty_discount') }}: -<span x-text="loyaltyDiscount.toFixed(2)"></span> Birr
+                            </p>
+                        </div>
+                    </div>
+                </template>
+                <template x-if="loyaltyEnabled && userPoints < loyaltyMinRedeem && userPoints > 0">
+                    <div class="border-t border-[#E6DFD5] pt-6">
+                        <p class="text-[10px] text-stone-400 font-bold uppercase tracking-wider">
+                            Redeem LULU Points (Available: <span x-text="userPoints"></span> PTS)
+                        </p>
+                        <p class="text-[9px] text-[#A38B7E] uppercase tracking-wider mt-1">
+                            You need at least <span x-text="loyaltyMinRedeem"></span> points to start redeeming.
+                        </p>
+                    </div>
+                </template>
+
+                <!-- Hidden Input to submit points -->
+                <input type="hidden" name="redeem_points" :value="form.redeem_points">
+
                 <!-- Totals -->
                 <div class="border-t border-[#E6DFD5] pt-6 space-y-4 text-[11px] font-bold uppercase tracking-widest text-[#221F1F]">
                     <div class="flex justify-between">
                         <span class="text-[#A38B7E]">Subtotal</span>
-                        <span class="font-mono">{{ $summary['subtotal_formatted'] }}</span>
+                        <span class="font-mono" x-text="subtotalDisplay">{{ $summary['subtotal_formatted'] }}</span>
+                    </div>
+
+                    <div class="flex justify-between text-emerald-700" x-show="couponDiscount > 0">
+                        <span>{{ __('coupon_discount') }} (<span x-text="appliedCouponCode"></span>)</span>
+                        <span class="font-mono text-emerald-700" x-text="'-' + couponDiscount.toFixed(2) + ' Birr'">-0.00 Birr</span>
+                    </div>
+
+                    <div class="flex justify-between text-emerald-700" x-show="loyaltyDiscount > 0">
+                        <span>{{ __('loyalty_discount') }}</span>
+                        <span class="font-mono text-emerald-700" x-text="'-' + loyaltyDiscount.toFixed(2) + ' Birr'">-0.00 Birr</span>
                     </div>
 
                     <div class="flex justify-between">
@@ -455,6 +520,14 @@
                         <span>Total</span>
                         <span class="font-mono" x-text="totalDisplay">$0.00</span>
                     </div>
+                </div>
+
+                <!-- Place Order Button inside summary card -->
+                <div class="pt-6" x-show="currentStep === 2" x-transition>
+                    <button type="submit" :disabled="isSubmitting" class="w-full bg-[#221F1F] hover:bg-[#8C6554] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-[11px] uppercase tracking-[0.2em] py-4 rounded-full shadow-lg transition-all cursor-pointer pointer-events-auto">
+                        <span x-show="!isSubmitting">Place Order</span>
+                        <span x-show="isSubmitting" x-cloak>Processing...</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -470,6 +543,7 @@ function checkoutWizard() {
 
     return {
         currentStep: 0,
+        isSubmitting: false,
         timerSeconds: 1200,
         timerDisplay: '20:00',
         proofPreviewUrl: null,
@@ -479,6 +553,24 @@ function checkoutWizard() {
         countries: [],
         cities: [],
         districts: [],
+
+        // Coupon state
+        rawSubtotal: {{ $summary['subtotal'] / 100 }},
+        couponDiscount: {{ $summary['discount_amount'] / 100 }},
+        appliedCouponCode: '{{ $summary['discount_code'] }}',
+        couponInput: '{{ $summary['discount_code'] }}',
+        couponMessage: '',
+        couponIsError: false,
+        couponApplying: false,
+
+        // Loyalty state
+        loyaltyEnabled: @json($loyaltyEnabled),
+        userPoints: @json($userPoints),
+        loyaltyMinRedeem: @json($loyaltySettings['min_redeem'] ?? 50),
+        pointValueCents: @json($loyaltySettings['point_value_cents'] ?? 100),
+        redeemPointsInput: 0,
+        loyaltyDiscount: 0,
+        redeemEnabled: false,
 
         errors: {
             customer_name: false,
@@ -502,11 +594,27 @@ function checkoutWizard() {
             customer_address: '',
             payment_method: '{{ ($settings['payment_cod'] ?? '1') === '1' ? 'cod' : 'transfer' }}',
             selected_bank_id: '{{ ($settings['payment_cod'] ?? '1') === '1' ? '' : $bankAccounts->first()?->id }}',
+            redeem_points: 0,
         },
 
         initWizard() {
             this.startTimer();
             this.initFlatpickr();
+
+            this.$watch('form.logistics_mode', value => {
+                if (value === 'pickup') {
+                    this.form.customer_country = '';
+                    this.form.customer_city = '';
+                    this.form.customer_district = '';
+                    this.form.customer_address = '';
+                } else if (value === 'delivery_rider') {
+                    this.form.customer_country = 'Ethiopia';
+                    this.form.customer_city = 'Addis Ababa';
+                    this.form.customer_district = '';
+                } else if (value === 'delivery_fixed') {
+                    this.form.customer_country = 'Ethiopia';
+                }
+            });
 
             // Populate other countries from database list (excluding Ethiopia which is default)
             const otherCountries = [...new Set(this.shippingRates.filter(r => r.country !== 'Ethiopia').map(r => r.country))];
@@ -614,8 +722,69 @@ function checkoutWizard() {
             return this.deliveryFee.toFixed(2) + ' Birr';
         },
 
-        get totalAmount() { return Math.max(0, rawSubtotal + this.deliveryFee); },
+        get subtotalDisplay() {
+            return this.rawSubtotal.toFixed(2) + ' Birr';
+        },
+
+        get totalAmount() { 
+            return Math.max(0, this.rawSubtotal - this.couponDiscount - this.loyaltyDiscount + this.deliveryFee); 
+        },
         get totalDisplay() { return this.totalAmount.toFixed(2) + ' Birr'; },
+
+        applyCouponCode() {
+            if (!this.couponInput || !this.couponInput.trim()) return;
+            this.couponApplying = true;
+            this.couponMessage = '';
+
+            fetch('/cart/discount', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ code: this.couponInput })
+            })
+            .then(res => res.json())
+            .then(data => {
+                this.couponApplying = false;
+                if (data.success && data.summary) {
+                    this.couponDiscount = data.summary.discount_amount / 100;
+                    this.appliedCouponCode = data.summary.discount_code;
+                    this.couponMessage = data.message || 'Coupon applied successfully!';
+                    this.couponIsError = false;
+                } else {
+                    this.couponMessage = (data.errors && data.errors.code) ? data.errors.code[0] : 'Invalid coupon code';
+                    this.couponIsError = true;
+                }
+            })
+            .catch(err => {
+                this.couponApplying = false;
+                this.couponMessage = 'Error applying coupon code';
+                this.couponIsError = true;
+            });
+        },
+
+        updateLoyaltyDiscount() {
+            if (!this.redeemEnabled) {
+                this.loyaltyDiscount = 0;
+                this.form.redeem_points = 0;
+                return;
+            }
+            
+            let pts = parseInt(this.redeemPointsInput) || 0;
+            if (pts > this.userPoints) pts = this.userPoints;
+            if (pts < 0) pts = 0;
+            this.redeemPointsInput = pts;
+            
+            if (pts >= this.loyaltyMinRedeem) {
+                this.loyaltyDiscount = (pts * this.pointValueCents) / 100;
+                this.form.redeem_points = pts;
+            } else {
+                this.loyaltyDiscount = 0;
+                this.form.redeem_points = 0;
+            }
+        },
 
         validateCurrentStep(stepIdx) {
             let isValid = true;
@@ -687,6 +856,36 @@ function checkoutWizard() {
             }
 
             return isValid;
+        },
+
+        validateLoyalty() {
+            // Only validate loyalty if the user has opted in to redeem
+            if (!this.redeemEnabled) return true;
+            const pts = parseInt(this.redeemPointsInput) || 0;
+            if (pts < this.loyaltyMinRedeem) {
+                window.dispatchEvent(new CustomEvent('show-toast', {
+                    detail: { message: `Points to Redeem must be at least ${this.loyaltyMinRedeem}`, isError: true }
+                }));
+                return false;
+            }
+            if (pts > this.userPoints) {
+                window.dispatchEvent(new CustomEvent('show-toast', {
+                    detail: { message: `You only have ${this.userPoints} points available`, isError: true }
+                }));
+                return false;
+            }
+            return true;
+        },
+
+        placeOrder(form) {
+            // Validate all steps + loyalty before submitting
+            if (!this.validateCurrentStep(0)) return;
+            if (!this.validateCurrentStep(1)) return;
+            if (!this.validateCurrentStep(2)) return;
+            if (!this.validateLoyalty()) return;
+
+            this.isSubmitting = true;
+            form.submit();
         },
 
         nextStep() {

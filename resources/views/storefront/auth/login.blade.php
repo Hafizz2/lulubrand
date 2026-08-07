@@ -19,9 +19,9 @@
         <form method="POST" action="{{ route('login') }}" class="space-y-6">
             @csrf
             <div>
-                <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">Email Address</label>
-                <input type="email" name="email" value="{{ old('email') }}" required autofocus class="w-full px-4 py-3 bg-[#F3EEE8] border border-transparent focus:border-[#8C6554] text-sm text-[#221F1F] focus:outline-none transition-colors rounded-sm shadow-inner">
-                @error('email')
+                <label class="block text-[10px] font-bold uppercase tracking-[0.2em] text-[#221F1F] mb-2">Phone Number</label>
+                <input type="tel" name="phone" placeholder="+251 9XX XXX XXXX" value="{{ old('phone') }}" required autofocus class="w-full px-4 py-3 bg-[#F3EEE8] border border-transparent focus:border-[#8C6554] text-sm text-[#221F1F] focus:outline-none transition-colors rounded-sm shadow-inner">
+                @error('phone')
                     <p class="text-[10px] text-[#C49A9A] mt-2 font-bold uppercase tracking-widest">{{ $message }}</p>
                 @enderror
             </div>

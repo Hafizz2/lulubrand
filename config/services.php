@@ -38,4 +38,11 @@ return [
         'owner_chat_id' => env('TELEGRAM_OWNER_CHAT_ID'),
     ],
 
+    'afromessage' => [
+        'api_key' => env('AFROMESSAGE_API_KEY'),
+        'sender_id' => env('AFROMESSAGE_SENDER_ID'),
+        'identifier' => env('AFROMESSAGE_IDENTIFIER'),
+        'endpoint' => env('AFROMESSAGE_ENDPOINT', 'https://api.afromessage.com/api/send'),
+    ],
+
 ];

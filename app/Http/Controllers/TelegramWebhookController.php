@@ -55,6 +55,7 @@ class TelegramWebhookController extends Controller
 
         match ($data) {
             'btn_my_orders' => $this->handleOrders($chatId),
+            'btn_my_points' => $this->handlePoints($chatId),
             'btn_new_arrivals' => $this->handleNewArrivals($chatId),
             'btn_contact_support' => $this->sendReply($chatId,
                 "📞 <b>LULU Couture Support</b>\n\n"
@@ -77,6 +78,7 @@ class TelegramWebhookController extends Controller
             '/start' => $this->handleStart($chatId, $args),
             '/track' => $this->handleTrack($chatId, $args),
             '/orders' => $this->handleOrders($chatId),
+            '/points' => $this->handlePoints($chatId),
             '/newarrivals' => $this->handleNewArrivals($chatId),
             '/unlink' => $this->handleUnlink($chatId),
             default  => $this->sendWelcomeMessage($chatId),
@@ -101,7 +103,10 @@ class TelegramWebhookController extends Controller
                     ['text' => '✨ New Arrivals', 'callback_data' => 'btn_new_arrivals'],
                 ],
                 [
+                    ['text' => '💰 My Points', 'callback_data' => 'btn_my_points'],
                     ['text' => '📞 Contact Support', 'callback_data' => 'btn_contact_support'],
+                ],
+                [
                     ['text' => '🛍️ Visit Storefront', 'url' => config('app.url', 'http://localhost:8000')],
                 ]
             ]
@@ -129,6 +134,11 @@ class TelegramWebhookController extends Controller
                         'phone_number' => $order->customer_phone,
                     ]
                 );
+
+                $user = User::where('phone', $order->customer_phone)->first();
+                if ($user) {
+                    $user->update(['telegram_chat_id' => (string) $chatId]);
+                }
 
                 $itemsText = "";
                 if ($order->items && count($order->items) > 0) {
@@ -180,6 +190,11 @@ class TelegramWebhookController extends Controller
                     'phone_number' => $phone,
                 ]
             );
+
+            $user = User::where('phone', $phone)->first();
+            if ($user) {
+                $user->update(['telegram_chat_id' => (string) $chatId]);
+            }
             $this->sendReply($chatId,
                 "✅ <b>Phone Linked!</b>\n\n"
                 . "Linked to <code>{$phone}</code>. Latest Order: <code>{$order->order_number}</code> (" . strtoupper($order->status) . ").",
@@ -291,6 +306,35 @@ class TelegramWebhookController extends Controller
             $deleted
                 ? "🔗 Your account has been unlinked from this chat."
                 : "You were not linked.",
+            $this->getMainMenuKeyboard()
+        );
+    }
+
+    private function handlePoints(int|string $chatId): void
+    {
+        $link = TelegramLink::where('telegram_chat_id', (string) $chatId)->first();
+        if (!$link || !$link->user_id) {
+            $this->sendReply($chatId, "❌ Your Telegram is not linked to a LULU account.\nSend your phone number to link your account.", $this->getMainMenuKeyboard());
+            return;
+        }
+        
+        $user = User::find($link->user_id);
+        if (!$user) {
+            $this->sendReply($chatId, "❌ Account not found.", $this->getMainMenuKeyboard());
+            return;
+        }
+        
+        $loyaltyPoint = \App\Models\LoyaltyPoint::where('user_id', $user->id)->first();
+        $balance = $loyaltyPoint?->balance ?? 0;
+        $earned = $loyaltyPoint?->lifetime_earned ?? 0;
+        $redeemed = $loyaltyPoint?->lifetime_redeemed ?? 0;
+        
+        $this->sendReply($chatId,
+            "💰 <b>Your Loyalty Points</b>\n\n"
+            . "Current Balance: <b>{$balance} points</b>\n"
+            . "Total Earned: {$earned} points\n"
+            . "Total Redeemed: {$redeemed} points\n\n"
+            . "Keep shopping to earn more points!",
             $this->getMainMenuKeyboard()
         );
     }

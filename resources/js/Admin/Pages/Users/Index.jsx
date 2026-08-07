@@ -64,6 +64,7 @@ export default function UsersIndex({ users, filters }) {
                             <option value="">All Roles</option>
                             <option value="owner">Owners</option>
                             <option value="staff">Staff</option>
+                            <option value="cashier">Cashiers</option>
                             <option value="customer">Customers</option>
                         </select>
                         <button type="submit" className="px-4 py-2.5 bg-[#8C6554] text-white text-xs font-bold uppercase rounded-lg shadow-sm">
@@ -113,6 +114,7 @@ export default function UsersIndex({ users, filters }) {
                                         >
                                             <option value="owner">Owner</option>
                                             <option value="staff">Staff</option>
+                                            <option value="cashier">Cashier</option>
                                             <option value="customer">Customer</option>
                                         </select>
                                     </td>
@@ -212,7 +214,9 @@ export default function UsersIndex({ users, filters }) {
                                     className="w-full px-3.5 py-2.5 bg-[#F9F6F0] border border-[#E6DFD5] rounded-lg text-sm text-stone-900 focus:outline-none focus:border-[#8C6554]"
                                 >
                                     <option value="staff">Staff</option>
+                                    <option value="cashier">Cashier</option>
                                     <option value="owner">Owner</option>
+                                    <option value="customer">Customer</option>
                                 </select>
                             </div>
 

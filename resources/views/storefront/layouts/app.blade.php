@@ -193,6 +193,7 @@
                 <nav class="hidden lg:flex items-center space-x-6 text-[11px] font-semibold uppercase tracking-[0.15em] text-[#1A1A1A]">
                     <a href="/" class="hover:text-[#82203E] transition-colors">{{ __('nav_home') }}</a>
                     <a href="/categories" class="hover:text-[#82203E] transition-colors">{{ __('nav_categories') }}</a>
+                    <a href="{{ route('catalog.outfits') }}" class="hover:text-[#82203E] transition-colors">{{ __('nav_full_outfits') }}</a>
                     <a href="/catalog?sort=newest" class="hover:text-[#82203E] transition-colors">{{ __('nav_new_arrivals') }}</a>
                     <a href="/catalog" class="hover:text-[#82203E] transition-colors">{{ __('nav_shop_all') }}</a>
                 </nav>
@@ -214,10 +215,9 @@
                     <button @click="searchOpen = true" class="text-[#1A1A1A] hover:text-[#82203E] transition-colors p-1">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </button>
-                    <button @click="openDrawer = true" class="text-[#1A1A1A] hover:text-[#82203E] transition-colors flex items-center p-1">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                        <span class="ml-1 text-[10px] font-bold" x-text="cart.count">0</span>
-                    </button>
+                    <a href="{{ Auth::check() ? route('account.profile') : route('login') }}" class="text-[#1A1A1A] hover:text-[#82203E] transition-colors p-1" title="Account">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                    </a>
                 </div>
                 
                 <!-- Desktop Right Actions -->
@@ -232,16 +232,26 @@
                         {{ __('search_label') }}
                     </button>
                     @auth
-                        <form method="POST" action="{{ route('logout') }}" class="inline">
-                            @csrf
-                            <button type="submit" class="hover:text-[#82203E] transition-colors uppercase text-[11px] font-semibold tracking-[0.15em]">
-                                {{ __('nav_logout') }}
+                        <div class="relative" x-data="{ accountOpen: false }">
+                            <button @click="accountOpen = !accountOpen" class="hover:text-[#82203E] transition-colors flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                                Account
                             </button>
-                        </form>
+                            <div x-show="accountOpen" @click.away="accountOpen = false" x-cloak
+                                 class="absolute right-0 mt-2 w-48 bg-white border border-[#EEEEEE] shadow-lg z-50 py-2">
+                                <a href="/account/profile" class="block px-4 py-2 text-[11px] uppercase tracking-wider text-[#1A1A1A] hover:bg-[#FAF2F2] hover:text-[#82203E]">{{ __('account_profile') }}</a>
+                                <a href="/account/orders" class="block px-4 py-2 text-[11px] uppercase tracking-wider text-[#1A1A1A] hover:bg-[#FAF2F2] hover:text-[#82203E]">{{ __('account_orders') }}</a>
+                                <a href="/account/wishlist" class="block px-4 py-2 text-[11px] uppercase tracking-wider text-[#1A1A1A] hover:bg-[#FAF2F2] hover:text-[#82203E]">{{ __('account_wishlist') }}</a>
+                                <a href="/account" class="block px-4 py-2 text-[11px] uppercase tracking-wider text-[#1A1A1A] hover:bg-[#FAF2F2] hover:text-[#82203E]">{{ __('account_points') }}</a>
+                                <div class="border-t border-[#EEEEEE] my-1"></div>
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="block w-full text-left px-4 py-2 text-[11px] uppercase tracking-wider text-[#666] hover:bg-[#FAF2F2] hover:text-[#82203E]">{{ __('nav_logout') }}</button>
+                                </form>
+                            </div>
+                        </div>
                     @else
-                        <a href="{{ route('login') }}" class="hover:text-[#82203E] transition-colors">
-                            {{ __('nav_sign_in') }}
-                        </a>
+                        <a href="{{ route('login') }}" class="hover:text-[#82203E] transition-colors">{{ __('nav_sign_in') }}</a>
                     @endauth
                     <div class="h-4 w-px bg-[#EEEEEE]"></div>
                     <button @click="openDrawer = true" class="hover:text-[#82203E] transition-colors flex items-center">
@@ -299,6 +309,7 @@
             <div class="flex-1 overflow-y-auto px-6 py-4 space-y-0">
                 <a href="/" @click="navMenuOpen = false" class="block py-4 text-[11px] uppercase tracking-wider font-semibold text-[#1A1A1A] border-b border-[#EEEEEE]">{{ __('nav_home') }}</a>
                 <a href="/categories" @click="navMenuOpen = false" class="block py-4 text-[11px] uppercase tracking-wider font-semibold text-[#1A1A1A] border-b border-[#EEEEEE]">{{ __('nav_categories') }}</a>
+                <a href="{{ route('catalog.outfits') }}" @click="navMenuOpen = false" class="block py-4 text-[11px] uppercase tracking-wider font-semibold text-[#1A1A1A] border-b border-[#EEEEEE]">{{ __('nav_full_outfits') }}</a>
                 <a href="/catalog?sort=newest" @click="navMenuOpen = false" class="block py-4 text-[11px] uppercase tracking-wider font-semibold text-[#1A1A1A] border-b border-[#EEEEEE]">{{ __('nav_new_arrivals') }}</a>
                 <a href="/catalog" @click="navMenuOpen = false" class="block py-4 text-[11px] uppercase tracking-wider font-semibold text-[#1A1A1A] border-b border-[#EEEEEE]">{{ __('nav_shop_all') }}</a>
                 <a href="/track" @click="navMenuOpen = false" class="block py-4 text-[11px] uppercase tracking-wider font-semibold text-[#1A1A1A] border-b border-[#EEEEEE]">{{ __('nav_track_order') }}</a>
@@ -324,11 +335,19 @@
             </div>
             <div class="p-6 border-t border-[#EEEEEE]">
                 @auth
-                    <span class="block text-[11px] uppercase tracking-wider text-[#666666] mb-4">{{ __('auth_logged_in_as', ['name' => Auth::user()->name]) }}</span>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="w-full bg-[#1A1A1A] text-white py-3 text-[11px] uppercase tracking-wider font-semibold">{{ __('nav_logout') }}</button>
-                    </form>
+                    <div class="space-y-3">
+                        <span class="block text-[11px] uppercase tracking-wider text-[#666666] mb-2">{{ Auth::user()->name }}</span>
+                        <a href="/account/profile" @click="navMenuOpen = false" class="block w-full text-center bg-[#1A1A1A] text-white py-3 text-[11px] uppercase tracking-wider font-semibold">My Account</a>
+                        <div class="grid grid-cols-3 gap-2">
+                            <a href="/account/orders" class="text-center py-2 border border-[#EEEEEE] text-[9px] uppercase tracking-wider text-[#666] hover:border-[#82203E] hover:text-[#82203E]">Orders</a>
+                            <a href="/account/wishlist" class="text-center py-2 border border-[#EEEEEE] text-[9px] uppercase tracking-wider text-[#666] hover:border-[#82203E] hover:text-[#82203E]">Wishlist</a>
+                            <a href="/account" class="text-center py-2 border border-[#EEEEEE] text-[9px] uppercase tracking-wider text-[#666] hover:border-[#82203E] hover:text-[#82203E]">Points</a>
+                        </div>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="w-full text-center text-[10px] uppercase tracking-wider text-[#666] mt-2 hover:text-[#82203E]">Sign Out</button>
+                        </form>
+                    </div>
                 @else
                     <a href="{{ route('login') }}" class="block w-full text-center bg-[#1A1A1A] text-white py-3 text-[11px] uppercase tracking-wider font-semibold">{{ __('nav_sign_in') }}</a>
                 @endauth
@@ -451,6 +470,7 @@
                     <div class="flex flex-col space-y-2 text-[11px] text-[#666666]">
                         <a href="/catalog?sort=newest" class="hover:text-[#82203E] transition-colors">{{ __('nav_new_arrivals') }}</a>
                         <a href="/categories" class="hover:text-[#82203E] transition-colors">{{ __('footer_lookbook') }}</a>
+                        <a href="{{ route('catalog.outfits') }}" class="hover:text-[#82203E] transition-colors">FULL OUTFITS</a>
                         <a href="/catalog" class="hover:text-[#82203E] transition-colors">{{ __('footer_shop_all') }}</a>
                         <a href="/login" class="hover:text-[#82203E] transition-colors">{{ __('footer_account') }}</a>
                     </div>
@@ -614,17 +634,17 @@
     </div>
 
     <!-- ═══ PWA INSTALL PROMPT (Android / Generic) ═══ -->
-    <div id="pwaPrompt" class="pwa-prompt" role="dialog" aria-label="{{ __('pwa_install_title') }}">
+    <div id="pwaPrompt" class="pwa-prompt" role="dialog" aria-label="Get the Full LULU Experience">
         <img src="{{ asset('icons/icon-192x192.png') }}" alt="LULU" class="pwa-prompt-icon" onerror="this.src='{{ asset('logo.png') }}'">
         <div class="flex-1 min-w-0">
-            <p class="text-[13px] font-bold uppercase tracking-wider mb-0.5">{{ __('pwa_install_title') }}</p>
-            <p class="text-[11px] text-[#999] leading-snug mb-3">{{ __('pwa_install_body') }}</p>
+            <p class="text-[13px] font-bold uppercase tracking-wider mb-0.5">Get the Full LULU Experience</p>
+            <p class="text-[11px] text-[#999] leading-snug mb-3">Install LULU for faster shopping, instant order updates, and one-tap access directly from your home screen.</p>
             <div class="flex gap-2 flex-wrap">
                 <button id="pwaInstallBtn" class="bg-[#82203E] hover:bg-[#6a1932] text-white text-[11px] font-semibold uppercase tracking-wider px-5 py-2 transition-colors rounded-sm">
-                    {{ __('pwa_install_btn') }}
+                    Install App
                 </button>
                 <button id="pwaDismissBtn" class="text-[#666] text-[11px] font-semibold uppercase tracking-wider px-3 py-2 transition-colors hover:text-white">
-                    {{ __('pwa_install_dismiss') }}
+                    Maybe Later
                 </button>
             </div>
         </div>
@@ -634,13 +654,13 @@
     <div id="pwaIosPrompt" class="pwa-prompt-ios" role="dialog">
         <div class="pwa-arrow"></div>
         <img src="{{ asset('icons/icon-192x192.png') }}" alt="LULU" class="w-12 h-12 mx-auto mb-3 rounded-xl border border-[#EEEEEE]" onerror="this.src='{{ asset('logo.png') }}'">
-        <p class="text-[13px] font-bold text-[#1A1A1A] mb-1">{{ __('pwa_install_title') }}</p>
+        <p class="text-[13px] font-bold text-[#1A1A1A] mb-1">Install LULU in seconds.</p>
         <p class="text-[12px] text-[#666] mb-4">
             Tap <svg class="inline w-4 h-4 text-[#007AFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-            then <strong>"Add to Home Screen"</strong> to install the LULU app.
+            Share and choose <strong>"Add to Home Screen"</strong> to enjoy faster shopping and quick access anytime.
         </p>
         <button id="pwaIosDismissBtn" class="text-[11px] font-semibold uppercase tracking-wider text-[#666] px-4 py-2 hover:text-[#1A1A1A] transition-colors">
-            {{ __('pwa_install_dismiss') }}
+            Got It
         </button>
     </div>
 
@@ -651,16 +671,16 @@
                 <svg class="w-4 h-4 text-[#82203E]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
             </div>
             <div>
-                <p class="text-[13px] font-bold text-[#1A1A1A] mb-1">{{ __('push_title') }}</p>
-                <p class="text-[11px] text-[#666] leading-relaxed">{{ __('push_body') }}</p>
+                <p class="text-[13px] font-bold text-[#1A1A1A] mb-1">Never Miss an Update</p>
+                <p class="text-[11px] text-[#666] leading-relaxed">Receive order confirmations, shipping updates, delivery alerts, and exclusive offers right on your device.</p>
             </div>
         </div>
         <div class="flex gap-2">
             <button id="pushEnableBtn" class="flex-1 bg-[#82203E] hover:bg-[#6a1932] text-white text-[11px] font-semibold uppercase tracking-wider py-2.5 transition-colors rounded-sm">
-                {{ __('push_enable') }}
+                Allow Notifications
             </button>
             <button id="pushDismissBtn" class="text-[11px] font-semibold uppercase tracking-wider text-[#666] px-3 py-2.5 hover:text-[#1A1A1A] transition-colors">
-                {{ __('push_dismiss') }}
+                Not Now
             </button>
         </div>
     </div>
@@ -727,15 +747,20 @@
         });
     })();
 
-    // ── PWA + Push Logic ─────────────────────────────────────────────────────
+    // ── PWA + Push Logic (engagement-based, no permanent dismissal) ──────────
     (function() {
-        const PAGE_VISIT_KEY  = 'lulu_page_visits';
-        const ORDER_DONE_KEY  = 'lulu_order_placed';
-        const PWA_SHOWN_KEY   = 'lulu_pwa_shown';
-        const PUSH_SHOWN_KEY  = 'lulu_push_shown';
-        const PUSH_SUBS_KEY   = 'lulu_push_subscribed';
+        const PAGE_VISIT_KEY   = 'lulu_page_visits';
+        const PWA_INSTALLED_KEY = 'lulu_pwa_installed';
+        const PWA_DISMISS_KEY  = 'lulu_pwa_dismiss_ts';   // timestamp of last dismiss
+        const PUSH_DISMISS_KEY = 'lulu_push_dismiss_ts';  // timestamp of last push dismiss
+        const PUSH_SUBS_KEY    = 'lulu_push_subscribed';
+        const PUSH_GRANTED_KEY = 'lulu_push_granted';
+        const THREE_DAYS_MS    = 3  * 24 * 60 * 60 * 1000;
+        const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 
         let deferredInstallPrompt = null;
+        let _pwaPromptOpen = false;
+        let _pushPromptOpen = false;
 
         // Count page visits
         let visits = parseInt(localStorage.getItem(PAGE_VISIT_KEY) || '0') + 1;
@@ -744,31 +769,76 @@
         const isIOS = /ipad|iphone|ipod/.test(navigator.userAgent.toLowerCase()) && !window.MSStream;
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 
-        // Register Service Worker
+        // ── Register Service Worker ──────────────────────────────────────────
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js', { scope: '/' })
-                .then(reg => {
-                    console.log('[PWA] Service worker registered:', reg.scope);
-                })
+                .then(reg => console.log('[PWA] SW registered:', reg.scope))
                 .catch(err => console.warn('[PWA] SW registration failed:', err));
         }
 
-        // Capture beforeinstallprompt (Android/Chrome)
+        // ── Detect app installed via event ───────────────────────────────────
+        window.addEventListener('appinstalled', () => {
+            localStorage.setItem(PWA_INSTALLED_KEY, '1');
+            localStorage.removeItem(PWA_DISMISS_KEY);
+            console.log('[PWA] App installed via appinstalled event.');
+            // Wait then show push prompt
+            scheduleIdle(() => {
+                setTimeout(maybeShowPushPrompt, 3000);
+            });
+        });
+
+        // ── Capture beforeinstallprompt (Android/Chrome) ─────────────────────
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredInstallPrompt = e;
-            maybeShowPWAPrompt();
+            scheduleIdle(maybeShowPWAPrompt);
         });
 
+        // ── Engagement triggers ───────────────────────────────────────────────
+        // Exported so checkout/account pages can fire them
+        window.luluEngagement = {
+            orderPlaced() {
+                sessionStorage.setItem('lulu_order_placed', '1');
+                scheduleIdle(() => {
+                    // After order: try PWA install first, then push on return
+                    setTimeout(maybeShowPWAPrompt, 2000);
+                    // Show push prompt after order (earned)
+                    setTimeout(maybeShowPushPrompt, 5000);
+                });
+            },
+            loggedIn() {
+                sessionStorage.setItem('lulu_logged_in', '1');
+                scheduleIdle(() => setTimeout(maybeShowPWAPrompt, 2000));
+            },
+            wishlistCreated() {
+                sessionStorage.setItem('lulu_wishlisted', '1');
+                scheduleIdle(() => setTimeout(maybeShowPWAPrompt, 2000));
+            },
+        };
+
+        // Backwards-compat alias
+        window.luluMarkOrderPlaced = window.luluEngagement.orderPlaced;
+
+        // ── PWA Install Logic ─────────────────────────────────────────────────
         function shouldShowPWAPrompt() {
             if (isStandalone) return false;
-            if (localStorage.getItem(PWA_SHOWN_KEY) === 'dismissed') return false;
-            const orderPlaced = sessionStorage.getItem(ORDER_DONE_KEY);
-            // Show after 1 order OR after 5-10 page visits
-            return orderPlaced || visits >= 5;
+            if (localStorage.getItem(PWA_INSTALLED_KEY)) return false;
+
+            // Check cooldown (3 days after dismiss)
+            const dismissTs = parseInt(localStorage.getItem(PWA_DISMISS_KEY) || '0');
+            if (dismissTs && (Date.now() - dismissTs) < THREE_DAYS_MS) return false;
+
+            // Trigger: order placed, logged in, wishlisted, or 8-10+ page visits
+            const hasOrderSignal  = sessionStorage.getItem('lulu_order_placed');
+            const hasLoginSignal  = sessionStorage.getItem('lulu_logged_in');
+            const hasWishlistSignal = sessionStorage.getItem('lulu_wishlisted');
+            const hasVisitSignal  = visits >= 8;
+
+            return !!(hasOrderSignal || hasLoginSignal || hasWishlistSignal || hasVisitSignal);
         }
 
         function maybeShowPWAPrompt() {
+            if (_pwaPromptOpen) return;
             if (!shouldShowPWAPrompt()) return;
             if (isIOS) {
                 showIOSPrompt();
@@ -779,65 +849,103 @@
 
         function showAndroidPrompt() {
             const prompt = document.getElementById('pwaPrompt');
-            if (!prompt) return;
-            setTimeout(() => prompt.classList.add('pwa-prompt--visible'), 800);
+            if (!prompt || _pwaPromptOpen) return;
+            _pwaPromptOpen = true;
 
-            document.getElementById('pwaInstallBtn')?.addEventListener('click', async () => {
-                if (!deferredInstallPrompt) return;
-                deferredInstallPrompt.prompt();
-                const result = await deferredInstallPrompt.userChoice;
-                localStorage.setItem(PWA_SHOWN_KEY, result.outcome === 'accepted' ? 'installed' : 'dismissed');
-                prompt.classList.remove('pwa-prompt--visible');
-                deferredInstallPrompt = null;
-                // Show push prompt shortly after
-                if (result.outcome === 'accepted') setTimeout(showPushPrompt, 2000);
-            });
+            setTimeout(() => prompt.classList.add('pwa-prompt--visible'), 300);
 
-            document.getElementById('pwaDismissBtn')?.addEventListener('click', () => {
-                localStorage.setItem(PWA_SHOWN_KEY, 'dismissed');
-                prompt.classList.remove('pwa-prompt--visible');
-            });
+            // Use onclick= to avoid duplicate listeners
+            const installBtn = document.getElementById('pwaInstallBtn');
+            const dismissBtn = document.getElementById('pwaDismissBtn');
+
+            if (installBtn) {
+                installBtn.onclick = async () => {
+                    if (!deferredInstallPrompt) return;
+                    deferredInstallPrompt.prompt();
+                    const result = await deferredInstallPrompt.userChoice;
+                    deferredInstallPrompt = null;
+                    prompt.classList.remove('pwa-prompt--visible');
+                    _pwaPromptOpen = false;
+                    if (result.outcome === 'accepted') {
+                        localStorage.setItem(PWA_INSTALLED_KEY, '1');
+                    } else {
+                        localStorage.setItem(PWA_DISMISS_KEY, Date.now().toString());
+                    }
+                };
+            }
+
+            if (dismissBtn) {
+                dismissBtn.onclick = () => {
+                    localStorage.setItem(PWA_DISMISS_KEY, Date.now().toString());
+                    prompt.classList.remove('pwa-prompt--visible');
+                    _pwaPromptOpen = false;
+                };
+            }
         }
 
         function showIOSPrompt() {
             const prompt = document.getElementById('pwaIosPrompt');
-            if (!prompt) return;
-            setTimeout(() => prompt.classList.add('pwa-prompt--visible'), 800);
-            document.getElementById('pwaIosDismissBtn')?.addEventListener('click', () => {
-                localStorage.setItem(PWA_SHOWN_KEY, 'dismissed');
-                prompt.classList.remove('pwa-prompt--visible');
-            });
+            if (!prompt || _pwaPromptOpen) return;
+            _pwaPromptOpen = true;
+
+            setTimeout(() => prompt.classList.add('pwa-prompt--visible'), 300);
+
+            const dismissBtn = document.getElementById('pwaIosDismissBtn');
+            if (dismissBtn) {
+                dismissBtn.onclick = () => {
+                    localStorage.setItem(PWA_DISMISS_KEY, Date.now().toString());
+                    prompt.classList.remove('pwa-prompt--visible');
+                    _pwaPromptOpen = false;
+                };
+            }
         }
 
-        // Trigger on page load if already has enough visits
-        window.addEventListener('load', () => {
-            setTimeout(maybeShowPWAPrompt, 1500);
-            // Also show push notification prompt if app is installed
-            if (isStandalone && !localStorage.getItem(PUSH_SHOWN_KEY) && !localStorage.getItem(PUSH_SUBS_KEY)) {
-                setTimeout(showPushPrompt, 3000);
-            }
-        });
+        // ── Push Notification Logic ───────────────────────────────────────────
+        function shouldShowPushPrompt() {
+            if (!('Notification' in window) || !('serviceWorker' in navigator)) return false;
+            if (Notification.permission === 'granted') return false;
+            if (Notification.permission === 'denied') return false;
+            if (localStorage.getItem(PUSH_GRANTED_KEY)) return false;
 
-        // ── Push Notifications ───────────────────────────────────────────────
+            // Check cooldown: 3 days after dismiss (14 days if triggered by order)
+            const dismissTs = parseInt(localStorage.getItem(PUSH_DISMISS_KEY) || '0');
+            if (dismissTs && (Date.now() - dismissTs) < THREE_DAYS_MS) return false;
+
+            return true;
+        }
+
+        function maybeShowPushPrompt() {
+            if (_pushPromptOpen) return;
+            if (!shouldShowPushPrompt()) return;
+            showPushPrompt();
+        }
+
         function showPushPrompt() {
-            if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
-            if (Notification.permission === 'granted') return; // Already granted
-            if (localStorage.getItem(PUSH_SHOWN_KEY)) return;
-
             const prompt = document.getElementById('pushPrompt');
-            if (!prompt) return;
-            setTimeout(() => prompt.classList.add('push-prompt--visible'), 500);
+            if (!prompt || _pushPromptOpen) return;
+            _pushPromptOpen = true;
 
-            document.getElementById('pushEnableBtn')?.addEventListener('click', async () => {
-                localStorage.setItem(PUSH_SHOWN_KEY, '1');
-                prompt.classList.remove('push-prompt--visible');
-                await requestPushPermission();
-            });
+            setTimeout(() => prompt.classList.add('push-prompt--visible'), 300);
 
-            document.getElementById('pushDismissBtn')?.addEventListener('click', () => {
-                localStorage.setItem(PUSH_SHOWN_KEY, '1');
-                prompt.classList.remove('push-prompt--visible');
-            });
+            const enableBtn  = document.getElementById('pushEnableBtn');
+            const dismissBtn = document.getElementById('pushDismissBtn');
+
+            if (enableBtn) {
+                enableBtn.onclick = async () => {
+                    localStorage.setItem(PUSH_DISMISS_KEY, Date.now().toString());
+                    prompt.classList.remove('push-prompt--visible');
+                    _pushPromptOpen = false;
+                    await requestPushPermission();
+                };
+            }
+
+            if (dismissBtn) {
+                dismissBtn.onclick = () => {
+                    localStorage.setItem(PUSH_DISMISS_KEY, Date.now().toString());
+                    prompt.classList.remove('push-prompt--visible');
+                    _pushPromptOpen = false;
+                };
+            }
         }
 
         async function requestPushPermission() {
@@ -845,8 +953,8 @@
                 const permission = await Notification.requestPermission();
                 if (permission !== 'granted') return;
 
+                localStorage.setItem(PUSH_GRANTED_KEY, '1');
                 const reg = await navigator.serviceWorker.ready;
-                // VAPID public key — set this in .env as VAPID_PUBLIC_KEY
                 const vapidPublicKey = '{{ config("app.vapid_public_key", "") }}';
                 if (!vapidPublicKey) {
                     console.warn('[PWA] VAPID public key not configured in .env');
@@ -858,7 +966,6 @@
                     applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
                 });
 
-                const subJson = subscription.toJSON();
                 await fetch('/push/subscribe', {
                     method: 'POST',
                     headers: {
@@ -866,10 +973,10 @@
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                         'Accept': 'application/json',
                     },
-                    body: JSON.stringify(subJson),
+                    body: JSON.stringify(subscription.toJSON()),
                 });
 
-                localStorage.setItem('lulu_push_subscribed', '1');
+                localStorage.setItem(PUSH_SUBS_KEY, '1');
                 console.log('[PWA] Push subscription saved.');
             } catch (err) {
                 console.warn('[PWA] Push subscription failed:', err);
@@ -880,16 +987,108 @@
             const padding = '='.repeat((4 - base64String.length % 4) % 4);
             const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
             const rawData = window.atob(base64);
-            return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+            return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
         }
 
-        // Mark order as placed (call from checkout confirmation page)
-        window.luluMarkOrderPlaced = function() {
-            sessionStorage.setItem(ORDER_DONE_KEY, '1');
-            // Show PWA prompt after order
-            setTimeout(maybeShowPWAPrompt, 2000);
-        };
+        // ── Use requestIdleCallback for non-urgent prompts ────────────────────
+        function scheduleIdle(fn) {
+            if ('requestIdleCallback' in window) {
+                requestIdleCallback(fn, { timeout: 2000 });
+            } else {
+                setTimeout(fn, 500);
+            }
+        }
+
+        // ── On load: schedule checks when UI is idle ──────────────────────────
+        window.addEventListener('load', () => {
+            scheduleIdle(() => {
+                // Only show push if already installed (earned flow)
+                if (isStandalone) {
+                    setTimeout(maybeShowPushPrompt, 3000);
+                }
+                // PWA install prompt for engaged visitors
+                setTimeout(maybeShowPWAPrompt, 1500);
+            });
+        });
     })();
+    </script>
+    <script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('accountTabs', () => ({
+            activeTab: window.location.pathname,
+            loading: false,
+            navigate(event, url) {
+                if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                event.preventDefault();
+                this.loadUrl(url, true);
+            },
+            loadUrl(url, pushState = true) {
+                this.loading = true;
+                this.activeTab = url;
+                
+                fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(res => res.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        
+                        const newContent = doc.getElementById('account-main-content');
+                        const targetContainer = document.getElementById('account-main-content');
+                        
+                        if (newContent && targetContainer) {
+                            targetContainer.innerHTML = newContent.innerHTML;
+                        }
+                        
+                        // Update active navigation buttons in the DOM
+                        const tabs = document.querySelectorAll('[data-account-tab]');
+                        tabs.forEach(tab => {
+                            const tabUrl = tab.getAttribute('data-account-tab');
+                            // Normalize urls (e.g. '/' prefix or absolute matching)
+                            const cleanTabUrl = tabUrl.replace(window.location.origin, '');
+                            const cleanUrl = url.replace(window.location.origin, '');
+                            const isCurrent = cleanTabUrl === cleanUrl;
+                            
+                            if (isCurrent) {
+                                tab.className = "inline-block lg:block text-xs lg:text-sm uppercase tracking-widest font-semibold px-4 py-2 lg:px-0 lg:py-0 border border-[#1A1A1A] lg:border-none rounded-full lg:rounded-none bg-[#1A1A1A] lg:bg-transparent text-white lg:text-[#1A1A1A]";
+                            } else {
+                                tab.className = "inline-block lg:block text-xs lg:text-sm uppercase tracking-widest px-4 py-2 lg:px-0 lg:py-0 border border-stone-200 lg:border-none rounded-full lg:rounded-none hover:bg-[#82203E]/5 lg:hover:bg-transparent text-[#666666] hover:text-[#1A1A1A] transition-all";
+                            }
+                        });
+
+                        // Re-run scripts inside swapped content (to bind Alpine, etc)
+                        if (targetContainer) {
+                            const scripts = targetContainer.querySelectorAll('script');
+                            scripts.forEach(oldScript => {
+                                const newScript = document.createElement('script');
+                                Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                                newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                                oldScript.parentNode.replaceChild(newScript, oldScript);
+                            });
+                        }
+
+                        if (pushState) {
+                            history.pushState({ url }, '', url);
+                        }
+                        
+                        this.loading = false;
+                        
+                        // Scroll to top of account section if on mobile
+                        if (window.innerWidth < 1024) {
+                            const topEl = document.getElementById('account-section-top');
+                            if (topEl) topEl.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    })
+                    .catch((err) => {
+                        console.error('AJAX tab load failed:', err);
+                        window.location.href = url;
+                    });
+            },
+            handlePopState(event) {
+                const url = event.state?.url || window.location.pathname;
+                this.loadUrl(url, false);
+            }
+        }));
+    });
     </script>
 </body>
 </html>

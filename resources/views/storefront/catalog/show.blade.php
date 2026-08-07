@@ -209,11 +209,37 @@
                         <h1 class="text-[20px] sm:text-[24px] font-serif font-normal leading-[1.25] text-[#1A1A1A]">
                             {{ $product->title }}
                         </h1>
-                        <div class="text-[16px] sm:text-[18px] font-semibold text-[#1A1A1A] mt-2 flex items-center space-x-3">
+                        <div class="text-[16px] sm:text-[18px] font-semibold text-[#1A1A1A] mt-2 flex flex-wrap items-center gap-3">
                             <span x-text="activePrice">{{ number_format($product->base_price / 100, 2) }} Birr</span>
-                            <span x-show="activeStock > 0 && activeStock <= 5" class="bg-[#F6DADF] text-[#82203E] text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full" x-text="'Only ' + activeStock + ' Left!'"></span>
-                            <span x-show="activeStock === 0" class="bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">Out of Stock</span>
+                            @if($product->is_presale)
+                                <span class="bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">PRE-SALE</span>
+                            @elseif($product->variants->sum('stock_quantity') === 0)
+                                <span class="bg-[#1A1A1A] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">Out of Stock</span>
+                            @else
+                                <span x-show="activeStock > 0 && activeStock <= 5" class="bg-[#F6DADF] text-[#82203E] text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full" x-text="'Only ' + activeStock + ' Left!'"></span>
+                            @endif
                         </div>
+
+                        @if($product->is_presale)
+                            <div class="mt-4 p-3.5 bg-[#FAF6F6] border border-[#EBE3E3] rounded-xs space-y-1">
+                                <div class="text-[11px] font-bold uppercase tracking-wider text-[#82203E] flex items-center">
+                                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                    PRE-ORDER PRODUCT
+                                </div>
+                                @if($product->presale_available_at)
+                                    <div class="text-[12px] text-stone-800 font-medium">
+                                        Expected Dispatch / Availability: <span class="text-[#82203E] font-bold">{{ $product->presale_available_at->format('M d, Y') }}</span>
+                                    </div>
+                                @endif
+                                @if($product->presale_note)
+                                    <div class="text-[11px] text-stone-600 italic">
+                                        "{{ $product->presale_note }}"
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
                     </div>
 
                     <!-- Color Swatches (Synchronized with images) -->
@@ -257,11 +283,18 @@
                     @endif
 
                     <!-- Add to Bag CTA -->
-                    <div class="pt-4">
+                    <div class="pt-4 flex gap-3">
                         <button @click="addToBag()" 
-                                :disabled="activeStock === 0 || !activeVariantId || isAdding" 
-                                class="w-full h-[50px] bg-[#1A1A1A] hover:bg-[#82203E] text-white text-[13px] font-semibold uppercase tracking-[0.12em] rounded-none transition-colors disabled:opacity-50 shadow-md">
-                            <span x-text="isAdding ? 'ADDING...' : (activeStock > 0 ? (activeVariantId ? 'ADD TO BAG' : 'SELECT VARIANT') : 'OUT OF STOCK')">ADD TO BAG</span>
+                                :disabled="(!isPresale && activeStock === 0) || !activeVariantId || isAdding" 
+                                class="flex-grow h-[50px] bg-[#1A1A1A] hover:bg-[#82203E] text-white text-[13px] font-semibold uppercase tracking-[0.12em] rounded-none transition-colors disabled:opacity-50 shadow-md">
+                            <span x-text="isAdding ? '{{ __('btn_adding') }}' : (isPresale ? '{{ __('btn_pre_order') }}' : (activeStock > 0 ? (activeVariantId ? '{{ __('product_add_to_bag') }}' : '{{ __('btn_select_variant') }}') : '{{ __('btn_out_of_stock') }}'))">{{ __('product_add_to_bag') }}</span>
+                        </button>
+                        <button @click="$store.wishlist.toggle({{ $product->id }})"
+                                type="button"
+                                class="w-[50px] h-[50px] border border-[#1A1A1A] hover:bg-[#FAF2F2] flex items-center justify-center transition-colors text-[#1A1A1A] cursor-pointer">
+                            <svg class="w-5 h-5" :class="$store.wishlist.has({{ $product->id }}) ? 'fill-[#82203E] stroke-[#82203E]' : 'stroke-current fill-none'" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            </svg>
                         </button>
                     </div>
                 @endif
@@ -438,6 +471,7 @@ function productDetail() {
         activePrice: '{{ number_format($product->base_price / 100, 2) }} Birr',
         activeStock: {{ $product->variants->sum('stock_quantity') }},
         activeSku: '{{ $product->variants->first() ? $product->variants->first()->sku : "SKU-MAIN" }}',
+        isPresale: {{ $product->is_presale ? 'true' : 'false' }},
         quantity: 1,
         showSizeGuide: false,
         isAdding: false,

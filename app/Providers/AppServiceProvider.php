@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Events\OrderPlaced;
 use App\Events\OrderStatusChanged;
+use App\Listeners\AwardLoyaltyPoints;
 use App\Listeners\SendLowStockAlert;
 use App\Listeners\SendOrderPlacedNotification;
 use App\Listeners\SendStatusChangedNotification;

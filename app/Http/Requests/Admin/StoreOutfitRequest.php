@@ -21,6 +21,10 @@ class StoreOutfitRequest extends FormRequest
             'product_ids.*' => ['integer', 'exists:products,id'],
             'image_file' => ['nullable', 'file', 'image', 'max:10240'],
             'image_url' => ['nullable', 'string'],
+            'images_files' => ['nullable', 'array'],
+            'images_files.*' => ['file', 'image', 'max:10240'],
+            'images_urls' => ['nullable', 'array'],
+            'images_urls.*' => ['string'],
         ];
     }
 }
